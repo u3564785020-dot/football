@@ -1,0 +1,28 @@
+const express = require('express');
+const path = require('path');
+const app = express();
+
+const PORT = process.env.PORT || 3000;
+
+// Serve static files from current directory
+app.use(express.static('.', {
+  extensions: ['html'],
+  index: 'index.html'
+}));
+
+// Only fallback to index.html for routes that don't exist
+// This allows static files (images, CSS, JS) to be served correctly
+app.get('*', (req, res) => {
+  // If the request is for a file (has extension), don't fallback
+  if (path.extname(req.path)) {
+    return res.status(404).send('File not found');
+  }
+  
+  // Otherwise, send index.html (for client-side routing if needed)
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});
+

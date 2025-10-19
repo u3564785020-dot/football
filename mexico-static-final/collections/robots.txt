@@ -1,0 +1,126 @@
+# Robots.txt for 
+# Generated: 2025-10-17
+# Allow all crawlers
+User-agent: *
+Disallow: /admin
+Disallow: /cart
+Disallow: /orders
+Disallow: /checkouts/
+Disallow: /checkout
+Disallow: /carts
+Disallow: /account
+Disallow: /*/*/checkouts/
+Disallow: /*/*/orders
+Disallow: /*?*sort_by=*
+Disallow: /*?*filter.
+Disallow: /*+*
+Disallow: /search?
+Disallow: /apple-app-site-association
+Disallow: /.well-known/shopify/monorail
+Allow: /
+
+# Specific crawler instructions
+User-agent: Googlebot
+Crawl-delay: 0
+Disallow: /admin
+Disallow: /cart
+Disallow: /orders
+Disallow: /checkouts/
+Disallow: /checkout
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+Disallow: /checkout
+
+User-agent: Bingbot
+Crawl-delay: 1
+Disallow: /admin
+Disallow: /cart
+Disallow: /orders
+Disallow: /checkouts/
+Disallow: /checkout
+Allow: /
+
+# AI and LLM crawlers
+User-agent: GPTBot
+Allow: /
+Disallow: /admin
+Disallow: /cart
+Disallow: /checkout
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /admin
+Disallow: /cart
+Disallow: /checkout
+
+User-agent: CCBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# Social media crawlers
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+User-agent: Pinterestbot
+Allow: /
+
+# SEO tool crawlers
+User-agent: AhrefsBot
+Crawl-delay: 10
+Allow: /
+
+User-agent: SemrushBot
+Crawl-delay: 10
+Allow: /
+
+User-agent: MJ12bot
+Crawl-delay: 10
+Allow: /
+
+User-agent: DotBot
+Crawl-delay: 10
+Allow: /
+
+# Block bad bots
+User-agent: SemrushBot-SA
+Disallow: /
+
+User-agent: SemrushBot-BA
+Disallow: /
+
+User-agent: SemrushBot-SI
+Disallow: /
+
+User-agent: SemrushBot-SWA
+Disallow: /
+
+User-agent: SemrushBot-CT
+Disallow: /
+
+User-agent: SemrushBot-BM
+Disallow: /
+
+# Sitemaps
+Sitemap: https://goaltickets.com/sitemap.xml
+Sitemap: https://goaltickets.com/sitemap_products_1.xml
+Sitemap: https://goaltickets.com/sitemap_collections_1.xml
+Sitemap: https://goaltickets.com/sitemap_pages_1.xml
+Sitemap: https://goaltickets.com/sitemap_blogs_1.xml
+Sitemap: https://goaltickets.com/sitemap_images_1.xml# Host directive (for Yandex)
+Host: goaltickets.com
