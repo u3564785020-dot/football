@@ -115,9 +115,28 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'mexico-static-final', 'index.html'));
 });
 
-// Обработка других HTML страниц
-app.get('*.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'mexico-static-final', 'index.html'));
+// Serve pages directory
+app.get('/pages/:page', (req, res) => {
+  const pagePath = path.join(__dirname, 'mexico-static-final', 'pages', req.params.page);
+  res.sendFile(pagePath);
+});
+
+// Serve policies directory
+app.get('/policies/:page', (req, res) => {
+  const pagePath = path.join(__dirname, 'mexico-static-final', 'policies', req.params.page);
+  res.sendFile(pagePath);
+});
+
+// Serve collections
+app.get('/collections/:page', (req, res) => {
+  const pagePath = path.join(__dirname, 'mexico-static-final', 'collections', req.params.page);
+  res.sendFile(pagePath);
+});
+
+// Serve products
+app.get('/products/:page', (req, res) => {
+  const pagePath = path.join(__dirname, 'mexico-static-final', 'products', req.params.page);
+  res.sendFile(pagePath);
 });
 
 // Запускаем сервер
