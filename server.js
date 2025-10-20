@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
+const compression = require('compression');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -30,6 +31,7 @@ const cartSchema = new mongoose.Schema({
 const Cart = mongoose.model('Cart', cartSchema);
 
 // Middleware
+app.use(compression()); // Enable gzip compression
 app.use(express.json());
 app.use(express.static('.', {
   extensions: ['html'],
