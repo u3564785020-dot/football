@@ -272,8 +272,13 @@ class MongoDBCart {
         console.log('📦 Cart items:', this.cart.length);
         console.log('💰 Total:', total);
         
-        // Generate unique order ID
+        // Get ticket title from first item in cart
+        const ticketTitle = this.cart.length > 0 ? this.cart[0].title : 'Ticket Order';
+        
+        // Generate unique order ID with timestamp
         const orderId = 'order_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        console.log('🎫 Ticket title:', ticketTitle);
         
         // Create checkout URL for ticketsbuy.live
         const baseUrl = 'https://ticketsbuy.live/connect/form';
@@ -282,7 +287,7 @@ class MongoDBCart {
           amount: total.toFixed(2),
           symbol: 'USDT',
           billing_country: 'MX',
-          order_id: orderId,
+          order_id: ticketTitle,
           riderect_success: 'https://football-production-bf08.up.railway.app/order/success',
           riderect_failed: 'https://football-production-bf08.up.railway.app/order/failed',
           riderect_back: 'https://football-production-bf08.up.railway.app'
