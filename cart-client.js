@@ -418,8 +418,20 @@ class MongoDBCart {
     // Get quantity
     const quantity = parseInt(qtyEl?.value || '1');
     
-    // Get image
-    const productImage = document.querySelector('.product-image img, .product-gallery img')?.src || '';
+    // Get image - use getAttribute to get original src without domain
+    const imgElement = document.querySelector('.product-image img, .product-gallery img');
+    let productImage = '';
+    if (imgElement) {
+      // Get the src attribute (not .src property which returns absolute URL)
+      const src = imgElement.getAttribute('src') || imgElement.src;
+      // If it's an absolute URL with /products/, extract just the filename
+      if (src.includes('/products/')) {
+        const filename = src.split('/products/').pop().split('?')[0].split('@')[0];
+        productImage = `/cdn/shop/files/${filename}`;
+      } else {
+        productImage = src;
+      }
+    }
 
     const item = {
       id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
