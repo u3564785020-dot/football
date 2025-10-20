@@ -257,13 +257,8 @@ class MongoDBCart {
       });
     }
 
-    // Checkout button
-    const checkoutBtn = document.getElementById('checkout-btn');
-    if (checkoutBtn) {
-      checkoutBtn.addEventListener('click', () => {
-        alert('Checkout functionality coming soon!');
-      });
-    }
+    // Checkout button - handled by checkout-integration.js
+    // No need to attach listener here, checkout-integration.js will handle it
     
     console.log('✅ Event listeners attached');
   }

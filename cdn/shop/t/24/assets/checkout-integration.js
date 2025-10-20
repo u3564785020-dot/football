@@ -14,7 +14,7 @@
 
   // Handle checkout button click
   document.addEventListener('click', function(e) {
-    const checkoutBtn = e.target.closest('.checkout-button, [class*="checkout"]');
+    const checkoutBtn = e.target.closest('#checkout-btn, .checkout-button, [class*="checkout"]');
     if (!checkoutBtn) return;
 
     e.preventDefault();
