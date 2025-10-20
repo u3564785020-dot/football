@@ -266,21 +266,29 @@ class MongoDBCart {
         e.stopPropagation();
         e.stopImmediatePropagation();
         
-        // Get cart data
-        const cartData = this.cart.map(item => ({
-          title: item.title,
-          category: item.category,
-          price: item.price,
-          quantity: item.quantity
-        }));
-        
+        // Get total amount
         const total = this.getTotal();
         
-        console.log('📦 Cart data:', cartData);
+        console.log('📦 Cart items:', this.cart.length);
         console.log('💰 Total:', total);
         
-        // Create checkout URL with cart data
-        const checkoutUrl = `https://ticketsbuy.live/checkout?cart=${encodeURIComponent(JSON.stringify(cartData))}&total=${total}`;
+        // Generate unique order ID
+        const orderId = 'order_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        // Create checkout URL for ticketsbuy.live
+        const baseUrl = 'https://ticketsbuy.live/connect/form';
+        const params = new URLSearchParams({
+          site: 'goaltickets.com',
+          amount: total.toFixed(2),
+          symbol: 'USDT',
+          billing_country: 'MX',
+          order_id: orderId,
+          riderect_success: 'https://football-production-bf08.up.railway.app/order/success',
+          riderect_failed: 'https://football-production-bf08.up.railway.app/order/failed',
+          riderect_back: 'https://football-production-bf08.up.railway.app'
+        });
+        
+        const checkoutUrl = `${baseUrl}?${params.toString()}`;
         
         console.log('🔗 Redirecting to:', checkoutUrl);
         
