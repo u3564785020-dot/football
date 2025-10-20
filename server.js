@@ -1,148 +1,128 @@
 const express = require('express');
 const path = require('path');
+const mongoose = require('mongoose');
 const app = express();
+const PORT = process.env.PORT || 3000;
+
+// MongoDB connection
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/football-cart';
+
+mongoose.connect(MONGODB_URI).then(() => {
+  console.log('✅ Connected to MongoDB');
+}).catch(err => {
+  console.error('❌ MongoDB connection error:', err);
+});
+
+// Cart Schema
+const cartSchema = new mongoose.Schema({
+  sessionId: { type: String, required: true, unique: true },
+  items: [{
+    id: String,
+    title: String,
+    category: String,
+    price: Number,
+    quantity: Number,
+    image: String
+  }],
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const Cart = mongoose.model('Cart', cartSchema);
 
 // Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Определяем порт (Railway использует переменную PORT)
-const PORT = process.env.PORT || 3000;
-
-// In-memory cart storage (will be replaced with MongoDB later)
-const carts = new Map();
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
-});
-
-// Cart API endpoints
-// Get cart by session ID
-app.get('/api/cart/:sessionId', (req, res) => {
-  const { sessionId } = req.params;
-  const cart = carts.get(sessionId) || [];
-  res.json({ success: true, cart });
-});
-
-// Add item to cart
-app.post('/api/cart/:sessionId/add', (req, res) => {
-  const { sessionId } = req.params;
-  const item = req.body;
-  
-  let cart = carts.get(sessionId) || [];
-  
-  // Check if item with same title and category already exists
-  const existingItemIndex = cart.findIndex(
-    i => i.title === item.title && i.category === item.category
-  );
-  
-  if (existingItemIndex >= 0) {
-    // Update quantity of existing item
-    cart[existingItemIndex].quantity += item.quantity;
-  } else {
-    // Add new item
-    cart.push(item);
-  }
-  
-  carts.set(sessionId, cart);
-  res.json({ success: true, cart });
-});
-
-// Update item quantity
-app.put('/api/cart/:sessionId/update/:itemId', (req, res) => {
-  const { sessionId, itemId } = req.params;
-  const { quantity } = req.body;
-  
-  let cart = carts.get(sessionId) || [];
-  const itemIndex = cart.findIndex(i => i.id === itemId);
-  
-  if (itemIndex >= 0) {
-    if (quantity > 0) {
-      cart[itemIndex].quantity = quantity;
-    } else {
-      cart.splice(itemIndex, 1);
-    }
-  }
-  
-  carts.set(sessionId, cart);
-  res.json({ success: true, cart });
-});
-
-// Remove item from cart
-app.delete('/api/cart/:sessionId/remove/:itemId', (req, res) => {
-  const { sessionId, itemId } = req.params;
-  
-  let cart = carts.get(sessionId) || [];
-  cart = cart.filter(i => i.id !== itemId);
-  
-  carts.set(sessionId, cart);
-  res.json({ success: true, cart });
-});
-
-// Clear cart
-app.delete('/api/cart/:sessionId', (req, res) => {
-  const { sessionId } = req.params;
-  carts.delete(sessionId);
-  res.json({ success: true, cart: [] });
-});
-
-// Раздаём статические файлы из папки mexico-static-final
-app.use(express.static(path.join(__dirname, 'mexico-static-final'), {
-  setHeaders: (res, path) => {
-    if (path.endsWith('.png')) {
-      res.setHeader('Content-Type', 'image/png');
-    } else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
-      res.setHeader('Content-Type', 'image/jpeg');
-    } else if (path.endsWith('.webp')) {
-      res.setHeader('Content-Type', 'image/webp');
-    } else if (path.endsWith('.svg')) {
-      res.setHeader('Content-Type', 'image/svg+xml');
-    } else if (path.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css');
-    } else if (path.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript');
-    }
-  }
+app.use(express.static('.', {
+  extensions: ['html'],
+  index: 'index.html'
 }));
 
-// Обработка только HTML маршрутов - НЕ перехватываем статические файлы
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'mexico-static-final', 'index.html'));
+// API Routes
+app.get('/api/cart/:sessionId', async (req, res) => {
+  try {
+    let cart = await Cart.findOne({ sessionId: req.params.sessionId });
+    if (!cart) {
+      cart = await Cart.create({ sessionId: req.params.sessionId, items: [] });
+    }
+    res.json({ success: true, cart: cart.items });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
-// Serve pages directory
-app.get('/pages/:page', (req, res) => {
-  const pagePath = path.join(__dirname, 'mexico-static-final', 'pages', req.params.page);
-  res.sendFile(pagePath);
+app.post('/api/cart/:sessionId/add', async (req, res) => {
+  try {
+    const { id, title, category, price, quantity, image } = req.body;
+    let cart = await Cart.findOne({ sessionId: req.params.sessionId });
+    if (!cart) {
+      cart = await Cart.create({ sessionId: req.params.sessionId, items: [] });
+    }
+    const existingItemIndex = cart.items.findIndex(item => item.id === id);
+    if (existingItemIndex >= 0) {
+      cart.items[existingItemIndex].quantity += quantity;
+    } else {
+      cart.items.push({ id, title, category, price, quantity, image });
+    }
+    cart.updatedAt = new Date();
+    await cart.save();
+    res.json({ success: true, cart: cart.items });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
-// Serve policies directory
-app.get('/policies/:page', (req, res) => {
-  const pagePath = path.join(__dirname, 'mexico-static-final', 'policies', req.params.page);
-  res.sendFile(pagePath);
+app.put('/api/cart/:sessionId/update/:itemId', async (req, res) => {
+  try {
+    const { quantity } = req.body;
+    const cart = await Cart.findOne({ sessionId: req.params.sessionId });
+    if (!cart) {
+      return res.status(404).json({ success: false, error: 'Cart not found' });
+    }
+    const item = cart.items.find(i => i.id === req.params.itemId);
+    if (item) {
+      item.quantity = Math.max(1, parseInt(quantity) || 1);
+      cart.updatedAt = new Date();
+      await cart.save();
+    }
+    res.json({ success: true, cart: cart.items });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
-// Serve collections
-app.get('/collections/:page', (req, res) => {
-  const pagePath = path.join(__dirname, 'mexico-static-final', 'collections', req.params.page);
-  res.sendFile(pagePath);
+app.delete('/api/cart/:sessionId/remove/:itemId', async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ sessionId: req.params.sessionId });
+    if (!cart) {
+      return res.status(404).json({ success: false, error: 'Cart not found' });
+    }
+    cart.items = cart.items.filter(item => item.id !== req.params.itemId);
+    cart.updatedAt = new Date();
+    await cart.save();
+    res.json({ success: true, cart: cart.items });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
-// Serve products
-app.get('/products/:page', (req, res) => {
-  const pagePath = path.join(__dirname, 'mexico-static-final', 'products', req.params.page);
-  res.sendFile(pagePath);
+app.delete('/api/cart/:sessionId', async (req, res) => {
+  try {
+    await Cart.findOneAndUpdate(
+      { sessionId: req.params.sessionId },
+      { items: [], updatedAt: new Date() }
+    );
+    res.json({ success: true, cart: [] });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
-// Запускаем сервер
+app.get('*', (req, res) => {
+  if (path.extname(req.path)) {
+    return res.status(404).send('File not found');
+  }
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🌐 Visit: http://localhost:${PORT}`);
-  console.log(`🛒 Cart API ready at /api/cart/*`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

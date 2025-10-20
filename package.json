@@ -1,15 +1,17 @@
 {
-  "name": "mexico-static-site",
+  "name": "football-tickets",
   "version": "1.0.0",
-  "description": "Static website for Mexico World Cup tickets",
+  "description": "Football tickets website",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^8.19.1"
   },
   "engines": {
     "node": ">=18.x"
-  },
-  "dependencies": {
-    "express": "^4.21.2"
   }
 }
