@@ -33,7 +33,7 @@
   transition: transform 0.3s ease;
 }
 
-.cart-overlay.active .cart-sidebar {
+.cart-overlay.active ~ .cart-sidebar {
   transform: translateX(0);
 }
 
