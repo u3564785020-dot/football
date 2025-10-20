@@ -12,7 +12,7 @@ RUN npm install
 COPY server.js ./
 
 # Copy the static site files
-COPY mexico-static-final/ ./mexico-static-final/
+COPY . ./
 
 # Expose port 3000
 EXPOSE 3000
