@@ -305,6 +305,29 @@ class MongoDBCart {
       console.warn('⚠️ Checkout button not found');
     }
     
+    // Apply promo button - show green confirmation
+    const applyPromoBtn = document.querySelector('#apply-promo');
+    if (applyPromoBtn) {
+      applyPromoBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        const cartOverlay = document.getElementById('cart-overlay');
+        if (cartOverlay) {
+          // Add green flash effect
+          cartOverlay.style.transition = 'background-color 0.3s ease';
+          cartOverlay.style.backgroundColor = 'rgba(76, 175, 80, 0.3)'; // Green overlay
+          
+          // Remove green effect after 1 second
+          setTimeout(() => {
+            cartOverlay.style.backgroundColor = '';
+          }, 1000);
+          
+          console.log('✅ Fan ID confirmed (visual feedback)');
+        }
+      });
+      console.log('✅ Apply promo button listener attached');
+    }
+    
     console.log('✅ Event listeners attached');
   }
 
