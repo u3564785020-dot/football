@@ -326,15 +326,19 @@ class MongoDBCart {
       
       const cartSidebar = document.getElementById('cart-sidebar');
       if (cartSidebar) {
-        // Add green flash effect to cart sidebar
-        const originalBg = cartSidebar.style.backgroundColor;
-        cartSidebar.style.transition = 'background-color 0.3s ease';
-        cartSidebar.style.backgroundColor = 'rgba(76, 175, 80, 0.3)'; // Green overlay
+        // Add green border flash effect
+        const originalBorder = cartSidebar.style.border;
+        const originalBoxShadow = cartSidebar.style.boxShadow;
         
-        // Remove green effect after 1 second
+        cartSidebar.style.transition = 'all 0.3s ease';
+        cartSidebar.style.border = '5px solid #4CAF50'; // Green border
+        cartSidebar.style.boxShadow = '0 0 20px rgba(76, 175, 80, 0.8)'; // Green glow
+        
+        // Remove green effect after 1.5 seconds
         setTimeout(() => {
-          cartSidebar.style.backgroundColor = originalBg;
-        }, 1000);
+          cartSidebar.style.border = originalBorder;
+          cartSidebar.style.boxShadow = originalBoxShadow;
+        }, 1500);
         
         console.log('✅ Fan ID confirmed (visual feedback)');
       }
