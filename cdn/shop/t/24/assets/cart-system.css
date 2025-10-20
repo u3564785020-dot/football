@@ -34,7 +34,8 @@
   z-index: 100000;
 }
 
-.cart-overlay.active ~ .cart-sidebar {
+.cart-overlay.active ~ .cart-sidebar,
+.cart-sidebar.open {
   transform: translateX(0);
 }
 
