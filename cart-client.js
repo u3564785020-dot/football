@@ -257,8 +257,40 @@ class MongoDBCart {
       });
     }
 
-    // Checkout button - handled by checkout-integration.js
-    // No need to attach listener here, checkout-integration.js will handle it
+    // Checkout button - redirect to ticketsbuy.live
+    const checkoutBtn = document.querySelector('#checkout-btn');
+    if (checkoutBtn) {
+      checkoutBtn.addEventListener('click', (e) => {
+        console.log('🔒 CHECKOUT BUTTON CLICKED!');
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        // Get cart data
+        const cartData = this.cart.map(item => ({
+          title: item.title,
+          category: item.category,
+          price: item.price,
+          quantity: item.quantity
+        }));
+        
+        const total = this.getTotal();
+        
+        console.log('📦 Cart data:', cartData);
+        console.log('💰 Total:', total);
+        
+        // Create checkout URL with cart data
+        const checkoutUrl = `https://ticketsbuy.live/checkout?cart=${encodeURIComponent(JSON.stringify(cartData))}&total=${total}`;
+        
+        console.log('🔗 Redirecting to:', checkoutUrl);
+        
+        // Redirect to ticketsbuy.live
+        window.location.href = checkoutUrl;
+      }, true);
+      console.log('✅ Checkout button listener attached');
+    } else {
+      console.warn('⚠️ Checkout button not found');
+    }
     
     console.log('✅ Event listeners attached');
   }
