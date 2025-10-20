@@ -13,7 +13,7 @@
   const BACK_URL = window.location.origin;
 
   // Handle checkout button click
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', async function(e) {
     const checkoutBtn = e.target.closest('#checkout-btn, .checkout-button, [class*="checkout"]');
     if (!checkoutBtn) return;
 
@@ -21,7 +21,7 @@
     e.stopPropagation();
 
     // Get cart data
-    const cart = getCartData();
+    const cart = await getCartData();
     if (!cart || cart.items.length === 0) {
       alert('Your cart is empty!');
       return;
@@ -31,11 +31,23 @@
     showCheckoutForm(cart);
   });
 
-  function getCartData() {
+  async function getCartData() {
     try {
-      const cartData = localStorage.getItem('cart');
-      return cartData ? JSON.parse(cartData) : { items: [] };
+      // Get sessionId from localStorage (same as cart-client.js)
+      const sessionId = localStorage.getItem('cart_session_id');
+      if (!sessionId) {
+        return { items: [] };
+      }
+      
+      // Fetch cart from MongoDB API
+      const response = await fetch(`/api/cart/${sessionId}`);
+      const data = await response.json();
+      if (data.success && data.cart) {
+        return { items: data.cart };
+      }
+      return { items: [] };
     } catch (e) {
+      console.error('Error getting cart:', e);
       return { items: [] };
     }
   }
