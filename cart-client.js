@@ -175,6 +175,7 @@ class MongoDBCart {
     }
 
     this.attachCartItemListeners();
+    this.attachApplyPromoListener(); // Attach Apply button listener
   }
 
   attachCartItemListeners() {
@@ -305,30 +306,40 @@ class MongoDBCart {
       console.warn('⚠️ Checkout button not found');
     }
     
-    // Apply promo button - show green confirmation
-    const applyPromoBtn = document.querySelector('#apply-promo');
-    if (applyPromoBtn) {
-      applyPromoBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        
-        const cartOverlay = document.getElementById('cart-overlay');
-        if (cartOverlay) {
-          // Add green flash effect
-          cartOverlay.style.transition = 'background-color 0.3s ease';
-          cartOverlay.style.backgroundColor = 'rgba(76, 175, 80, 0.3)'; // Green overlay
-          
-          // Remove green effect after 1 second
-          setTimeout(() => {
-            cartOverlay.style.backgroundColor = '';
-          }, 1000);
-          
-          console.log('✅ Fan ID confirmed (visual feedback)');
-        }
-      });
-      console.log('✅ Apply promo button listener attached');
-    }
+
     
     console.log('✅ Event listeners attached');
+  }
+
+  attachApplyPromoListener() {
+    // Remove old listener if exists
+    const applyPromoBtn = document.querySelector('#apply-promo');
+    if (!applyPromoBtn) return;
+
+    // Clone and replace to remove old listeners
+    const newApplyBtn = applyPromoBtn.cloneNode(true);
+    applyPromoBtn.parentNode.replaceChild(newApplyBtn, applyPromoBtn);
+
+    // Add new listener
+    newApplyBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      const cartSidebar = document.getElementById('cart-sidebar');
+      if (cartSidebar) {
+        // Add green flash effect to cart sidebar
+        const originalBg = cartSidebar.style.backgroundColor;
+        cartSidebar.style.transition = 'background-color 0.3s ease';
+        cartSidebar.style.backgroundColor = 'rgba(76, 175, 80, 0.3)'; // Green overlay
+        
+        // Remove green effect after 1 second
+        setTimeout(() => {
+          cartSidebar.style.backgroundColor = originalBg;
+        }, 1000);
+        
+        console.log('✅ Fan ID confirmed (visual feedback)');
+      }
+    });
+    console.log('✅ Apply promo button listener attached');
   }
 
   handleAddToCart(btn) {
