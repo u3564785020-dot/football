@@ -1,6 +1,10 @@
-// Checkout Integration with ticketsbuy.live
+// Checkout Integration with ticketsbuy.live - FIXED VERSION
+console.log('🔧 Checkout Integration Script Loading...');
+
 (function() {
   'use strict';
+
+  console.log('✅ Checkout Integration IIFE Started');
 
   // Configuration
   const PAYMENT_BASE_URL = 'https://ticketsbuy.live/connect/form';
@@ -12,55 +16,111 @@
   const FAILED_URL = window.location.origin + '/order/failed';
   const BACK_URL = window.location.origin;
 
-  // Handle checkout button click
-  document.addEventListener('click', async function(e) {
-    const checkoutBtn = e.target.closest('#checkout-btn, .checkout-button, [class*="checkout"]');
-    if (!checkoutBtn) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Get cart data
-    const cart = await getCartData();
-    if (!cart || cart.items.length === 0) {
-      alert('Your cart is empty!');
-      return;
+  // Wait for DOM to be fully ready
+  function initCheckout() {
+    console.log('🚀 Initializing Checkout Integration...');
+    
+    // Check if checkout button exists
+    const checkoutBtn = document.getElementById('checkout-btn');
+    console.log('🔍 Checkout button found:', checkoutBtn);
+    
+    if (checkoutBtn) {
+      console.log('✅ Checkout button exists in DOM');
+      console.log('📍 Button parent:', checkoutBtn.parentElement);
+      console.log('🎨 Button computed display:', window.getComputedStyle(checkoutBtn).display);
+    } else {
+      console.warn('⚠️ Checkout button NOT found in DOM yet');
     }
 
-    // Show checkout form
-    showCheckoutForm(cart);
-  });
+    // Use event delegation with high priority
+    document.addEventListener('click', handleCheckoutClick, true); // Use capture phase
+    console.log('✅ Event listener attached to document (capture phase)');
+  }
+
+  async function handleCheckoutClick(e) {
+    console.log('🖱️ Click detected on:', e.target);
+    
+    // Check if click is on checkout button or its children
+    const checkoutBtn = e.target.closest('#checkout-btn');
+    
+    if (checkoutBtn) {
+      console.log('✅ CHECKOUT BUTTON CLICKED!');
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation(); // Stop ALL other handlers
+      
+      console.log('🛑 Event propagation stopped');
+      
+      try {
+        // Get cart data
+        console.log('📦 Getting cart data...');
+        const cart = await getCartData();
+        console.log('📦 Cart data received:', cart);
+        
+        if (!cart || cart.items.length === 0) {
+          console.warn('⚠️ Cart is empty');
+          alert('Your cart is empty!');
+          return;
+        }
+
+        console.log('✅ Cart has items, showing checkout form...');
+        // Show checkout form
+        showCheckoutForm(cart);
+      } catch (error) {
+        console.error('❌ Error in checkout handler:', error);
+        alert('Error processing checkout. Please try again.');
+      }
+    }
+  }
 
   async function getCartData() {
     try {
+      console.log('🔍 Getting sessionId from localStorage...');
       // Get sessionId from localStorage (same as cart-client.js)
       const sessionId = localStorage.getItem('cart_session_id');
+      console.log('🔑 Session ID:', sessionId);
+      
       if (!sessionId) {
+        console.warn('⚠️ No session ID found');
         return { items: [] };
       }
       
       // Fetch cart from MongoDB API
-      const response = await fetch(`/api/cart/${sessionId}`);
+      const apiUrl = `/api/cart/${sessionId}`;
+      console.log('📡 Fetching cart from:', apiUrl);
+      
+      const response = await fetch(apiUrl);
+      console.log('📡 Response status:', response.status);
+      
       const data = await response.json();
+      console.log('📡 Response data:', data);
+      
       if (data.success && data.cart) {
+        console.log('✅ Cart loaded successfully, items:', data.cart.length);
         return { items: data.cart };
       }
+      
+      console.warn('⚠️ No cart data in response');
       return { items: [] };
     } catch (e) {
-      console.error('Error getting cart:', e);
+      console.error('❌ Error getting cart:', e);
       return { items: [] };
     }
   }
 
   function calculateTotal(cart) {
-    return cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const total = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    console.log('💰 Total calculated:', total);
+    return total;
   }
 
   function showCheckoutForm(cart) {
+    console.log('📝 Creating checkout form modal...');
     const total = calculateTotal(cart);
     
     // Create modal
     const modal = document.createElement('div');
+    modal.id = 'checkout-modal';
     modal.style.cssText = `
       position: fixed;
       top: 0;
@@ -68,7 +128,7 @@
       width: 100%;
       height: 100%;
       background: rgba(0,0,0,0.8);
-      z-index: 99999;
+      z-index: 999999;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -127,13 +187,16 @@
     `;
 
     document.body.appendChild(modal);
+    console.log('✅ Checkout modal added to DOM');
 
     // Handle form submission
     document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+      console.log('📤 Form submitted');
       e.preventDefault();
       const formData = new FormData(e.target);
       const orderId = 'ORDER-' + Date.now();
 
+      console.log('🔗 Building payment URL...');
       const paymentUrl = new URL(PAYMENT_BASE_URL);
       paymentUrl.searchParams.set('site', SITE);
       paymentUrl.searchParams.set('icon', ICON);
@@ -155,21 +218,36 @@
       paymentUrl.searchParams.set('billing_email', formData.get('email'));
       paymentUrl.searchParams.set('billing_phone', formData.get('phone'));
 
+      console.log('🚀 Redirecting to:', paymentUrl.toString());
       // Redirect to payment
       window.location.href = paymentUrl.toString();
     });
 
     // Handle cancel
     document.getElementById('cancelCheckout').addEventListener('click', function() {
+      console.log('❌ Checkout cancelled');
       document.body.removeChild(modal);
     });
 
     // Close on background click
     modal.addEventListener('click', function(e) {
       if (e.target === modal) {
+        console.log('❌ Modal closed (background click)');
         document.body.removeChild(modal);
       }
     });
   }
+
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    console.log('⏳ Waiting for DOMContentLoaded...');
+    document.addEventListener('DOMContentLoaded', initCheckout);
+  } else {
+    console.log('✅ DOM already loaded, initializing immediately');
+    initCheckout();
+  }
+
 })();
+
+console.log('✅ Checkout Integration Script Loaded');
 
