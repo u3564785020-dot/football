@@ -174,6 +174,15 @@ class MongoDBCart {
       totalElement.textContent = `$${this.getTotal().toFixed(2)} USD`;
     }
 
+    // Disable checkout button by default (requires Fan ID)
+    const checkoutBtn = document.getElementById('checkout-btn');
+    if (checkoutBtn) {
+      checkoutBtn.disabled = true;
+      checkoutBtn.style.opacity = '0.5';
+      checkoutBtn.style.cursor = 'not-allowed';
+      checkoutBtn.title = 'Please enter Fan ID and click Apply';
+    }
+
     this.attachCartItemListeners();
     this.attachApplyPromoListener(); // Attach Apply button listener
   }
@@ -325,6 +334,27 @@ class MongoDBCart {
       e.preventDefault();
       
       const promoInput = document.getElementById('promo-input');
+      const fanId = promoInput ? promoInput.value.trim() : '';
+      
+      // Check if Fan ID is entered
+      if (!fanId) {
+        // Show error - Fan ID is required
+        if (promoInput) {
+          promoInput.style.transition = 'all 0.3s ease';
+          promoInput.style.border = '3px solid #f44336'; // Red border
+          promoInput.style.boxShadow = '0 0 15px rgba(244, 67, 54, 0.8)'; // Red glow
+          promoInput.placeholder = 'Fan ID is required!';
+          
+          setTimeout(() => {
+            promoInput.style.border = '';
+            promoInput.style.boxShadow = '';
+            promoInput.placeholder = 'Fan ID For FIFA World Cup 2026';
+          }, 2000);
+        }
+        console.log('❌ Fan ID is required');
+        return;
+      }
+      
       if (promoInput) {
         // Add green border flash effect to input field
         const originalBorder = promoInput.style.border;
@@ -342,6 +372,20 @@ class MongoDBCart {
         
         console.log('✅ Fan ID confirmed (visual feedback)');
       }
+      
+      // Enable checkout button
+      const checkoutBtn = document.getElementById('checkout-btn');
+      if (checkoutBtn) {
+        checkoutBtn.disabled = false;
+        checkoutBtn.style.opacity = '1';
+        checkoutBtn.style.cursor = 'pointer';
+        checkoutBtn.title = '';
+        console.log('✅ Checkout button enabled');
+      }
+      
+      // Store Fan ID for checkout
+      sessionStorage.setItem('fanId', fanId);
+      console.log('✅ Fan ID saved:', fanId);
     });
     console.log('✅ Apply promo button listener attached');
   }
