@@ -4963,5 +4963,95 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
 
   <link rel="stylesheet" href="/cdn/shop/t/24/assets/search-styles.css">
   <script src="/cdn/shop/t/24/assets/search-functionality.js"></script>
+  
+  <!-- Quantity Control Script -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== QUANTITY CONTROL SCRIPT LOADED ===');
+    
+    document.querySelectorAll('.qty-increase').forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
+        const variantId = this.dataset.variantId;
+        const input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"]`);
+        
+        if (input) {
+          let currentValue = parseInt(input.value) || 1;
+          const maxValue = parseInt(input.getAttribute('max')) || 4;
+          
+          if (currentValue < maxValue) {
+            input.value = currentValue + 1;
+            console.log(`Increased quantity to ${input.value}`);
+          } else {
+            console.log(`Maximum quantity (${maxValue}) reached`);
+            showQuantityNotification(this, `Maximum ${maxValue} tickets allowed`);
+          }
+        }
+      });
+    });
+    
+    document.querySelectorAll('.qty-decrease').forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
+        const variantId = this.dataset.variantId;
+        const input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"]`);
+        
+        if (input) {
+          let currentValue = parseInt(input.value) || 1;
+          const minValue = parseInt(input.getAttribute('min')) || 1;
+          
+          if (currentValue > minValue) {
+            input.value = currentValue - 1;
+            console.log(`Decreased quantity to ${input.value}`);
+          }
+        }
+      });
+    });
+    
+    document.querySelectorAll('.qty-input').forEach(input => {
+      input.addEventListener('input', function(e) {
+        let value = parseInt(this.value) || 1;
+        const minValue = parseInt(this.getAttribute('min')) || 1;
+        const maxValue = parseInt(this.getAttribute('max')) || 4;
+        
+        if (value < minValue) {
+          this.value = minValue;
+        } else if (value > maxValue) {
+          this.value = maxValue;
+          showQuantityNotification(this, `Maximum ${maxValue} tickets allowed`);
+        }
+      });
+      
+      input.addEventListener('keypress', function(e) {
+        if (e.key < '0' || e.key > '9') {
+          e.preventDefault();
+        }
+      });
+    });
+    
+    function showQuantityNotification(element, message) {
+      const notification = document.createElement('div');
+      notification.textContent = message;
+      notification.style.cssText = `position: absolute; top: -40px; left: 50%; transform: translateX(-50%); background: #ef4444; color: white; padding: 8px 16px; border-radius: 6px; font-size: 12px; white-space: nowrap; z-index: 1000; animation: fadeInOut 2s ease;`;
+      
+      if (!document.getElementById('quantity-notification-style')) {
+        const style = document.createElement('style');
+        style.id = 'quantity-notification-style';
+        style.textContent = `@keyframes fadeInOut { 0%, 100% { opacity: 0; } 10%, 90% { opacity: 1; } }`;
+        document.head.appendChild(style);
+      }
+      
+      const container = element.closest('.purchase-controls') || element.closest('.quantity-selector');
+      if (container) {
+        container.style.position = 'relative';
+        container.appendChild(notification);
+        setTimeout(() => notification.remove(), 2000);
+      }
+    }
+    
+    console.log('=== QUANTITY CONTROL SETUP COMPLETE ===');
+  });
+  </script>
+  
 </body>
 </html>
