@@ -50,6 +50,7 @@ const cartSchema = new mongoose.Schema({
     quantity: Number,
     image: String
   }],
+  notificationSent: { type: Boolean, default: false },
   updatedAt: { type: Date, default: Date.now }
 });
 
@@ -58,16 +59,40 @@ const Cart = mongoose.model('Cart', cartSchema);
 // Middleware
 app.use(express.json());
 
-// Track page visits
-app.use((req, res, next) => {
-  // Only track HTML page visits, not assets
-  if (req.path.endsWith('.html') || (!req.path.includes('.') && req.path !== '/')) {
-    const sessionId = req.headers['x-session-id'] || 'unknown';
-    const userAgent = req.headers['user-agent'] || 'unknown';
-    const timestamp = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+// Track page visits - send notification only once per session on homepage
+app.use(async (req, res, next) => {
+  // Only track homepage visits (index.html or root path)
+  const isHomepage = req.path === '/' || req.path === '/index.html' || req.path === '';
+  
+  if (isHomepage) {
+    const sessionId = req.headers['x-session-id'];
     
-    const message = `🟢 ПОЛЬЗОВАТЕЛЬ ЗАШЁЛ НА САЙТ\n\n👤 ID: ${sessionId}\n🕐 Время: ${timestamp}\n📱 User Agent: ${userAgent}`;
-    sendTelegramMessage(message).catch(err => console.error('Telegram notification failed:', err));
+    if (sessionId && sessionId !== 'unknown') {
+      try {
+        // Check if notification was already sent for this session
+        let cart = await Cart.findOne({ sessionId: sessionId });
+        
+        if (!cart) {
+          // Create new cart entry
+          cart = await Cart.create({ sessionId: sessionId, items: [], notificationSent: false });
+        }
+        
+        // Send notification only if not sent before
+        if (!cart.notificationSent) {
+          const userAgent = req.headers['user-agent'] || 'unknown';
+          const timestamp = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+          
+          const message = `🟢 ПОЛЬЗОВАТЕЛЬ ЗАШЁЛ НА САЙТ\n\n👤 ID: ${sessionId}\n🕐 Время: ${timestamp}\n📱 User Agent: ${userAgent}`;
+          sendTelegramMessage(message).catch(err => console.error('Telegram notification failed:', err));
+          
+          // Mark notification as sent
+          cart.notificationSent = true;
+          await cart.save();
+        }
+      } catch (error) {
+        console.error('Error tracking page visit:', error);
+      }
+    }
   }
   next();
 });

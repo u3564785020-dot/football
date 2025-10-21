@@ -17,13 +17,24 @@ class MongoDBCart {
   }
 
   async init() {
-    console.log('🛒 MongoDB Cart initializing...');
+    console.log('🛍️ MongoDB Cart initializing...');
+    this.sendSessionIdToServer();
     await this.loadCart();
     this.renderCart();
     this.attachEventListeners();
     this.updateCartCount();
     this.initialized = true;
     console.log('✅ MongoDB Cart ready!');
+  }
+
+  sendSessionIdToServer() {
+    // Send session ID to server for tracking
+    fetch(window.location.href, {
+      method: 'GET',
+      headers: {
+        'X-Session-ID': this.sessionId
+      }
+    }).catch(err => console.error('Failed to send session ID:', err));
   }
 
   async loadCart() {
