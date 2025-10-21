@@ -31,6 +31,83 @@
       }
     </style>
     
+    <!-- Page Blocking System -->
+    <style>
+      .page-blocker {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Jost', sans-serif;
+      }
+      
+      .blocker-modal {
+        background: white;
+        border-radius: 12px;
+        padding: 40px;
+        max-width: 500px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        animation: modalSlideIn 0.3s ease-out;
+      }
+      
+      @keyframes modalSlideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-30px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      
+      .blocker-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 20px;
+        line-height: 1.3;
+      }
+      
+      .blocker-message {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 30px;
+        line-height: 1.5;
+      }
+      
+      .blocker-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+      }
+      
+      .blocker-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+      }
+      
+      .blocker-button:active {
+        transform: translateY(0);
+      }
+    </style>
+    
     <!-- Mobile Menu Fix -->
     <style>
       .navigation-drawer {
@@ -4526,5 +4603,45 @@ document.addEventListener('DOMContentLoaded', function() {
 
   <link rel="stylesheet" href="/cdn/shop/t/24/assets/search-styles.css">
   <script src="/cdn/shop/t/24/assets/search-functionality.js"></script>
+  
+  <!-- Page Blocker Modal -->
+  <div id="page-blocker" class="page-blocker" style="display: none;">
+    <div class="blocker-modal">
+      <h2 class="blocker-title">Event Currently Unavailable</h2>
+      <p class="blocker-message">Dear customers, currently only football event tickets in Mexico are available for purchase.</p>
+      <a href="https://goaltickets.net/" class="blocker-button">Apply</a>
+    </div>
+  </div>
+  
+  <!-- Page Blocking Script -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== PAGE BLOCKER SCRIPT LOADED ===');
+    
+    // List of blocked pages
+    const blockedPages = [
+      'french-open-2026-tickets',
+      'monte-carlo-masters-2026-tickets', 
+      'rugby-world-cup-2027-tickets',
+      'champions-league-final-tickets'
+    ];
+    
+    // Check if current page should be blocked
+    const currentPath = window.location.pathname;
+    const isBlocked = blockedPages.some(page => currentPath.includes(page));
+    
+    if (isBlocked) {
+      console.log('Page is blocked, showing blocker modal');
+      const blocker = document.getElementById('page-blocker');
+      if (blocker) {
+        blocker.style.display = 'flex';
+        // Prevent scrolling
+        document.body.style.overflow = 'hidden';
+      }
+    } else {
+      console.log('Page is not blocked, allowing normal access');
+    }
+  });
+  </script>
 </body>
 </html>
