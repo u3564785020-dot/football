@@ -33,7 +33,39 @@
         font-family: 'Jost';
         font-display: swap;
       }
-    </style><meta property="og:type" content="product">
+    </style>
+    
+    <!-- Mobile Menu Fix -->
+    <style>
+      .navigation-drawer {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 9999 !important;
+        background: white !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s ease !important;
+        pointer-events: auto !important;
+      }
+      
+      .navigation-drawer.drawer--open {
+        transform: translateX(0) !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 9999 !important;
+        background: white !important;
+      }
+    </style>
+    
+    <meta property="og:type" content="product">
   <meta property="og:title" content="World Cup 2026 Tickets Match 24 | Mexico City Estadio Azteca, June 17">
   <meta property="product:price:amount" content="470.00">
   <meta property="product:price:currency" content="USD">
@@ -1612,7 +1644,7 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
   }
   
   #cart-drawer .free-shipping-bar__progress-fill::after {
-    content: '??';
+    content: '';
     position: absolute;
     right: -15px;
     top: -8px;
@@ -1740,7 +1772,7 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
   }
   
   #cart-drawer .line-item__remove::after {
-    content: '?';
+    content: '';
     position: absolute;
     right: -20px;
     font-size: 1.5rem;
@@ -1854,7 +1886,7 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
   
   /* Trust Badges */
   #cart-drawer::after {
-    content: '??Secure Checkout 100% Guaranteed';
+    content: 'Secure Checkout 100% Guaranteed';
     display: block;
     text-align: center;
     padding: 1rem;
