@@ -162,24 +162,33 @@ class MongoDBCart {
     if (emptyMessage) emptyMessage.style.display = 'none';
     if (cartFooter) cartFooter.style.display = 'block';
 
-    cartItems.innerHTML = this.cart.map(item => `
-      <div class="cart-item" data-id="${item.id}">
-        <div class="cart-item-image">
-          <img src="${item.image || '/cdn/shop/files/stadium-icon.png'}" alt="${item.title}">
-        </div>
-        <div class="cart-item-details">
-          <h4>${item.title}</h4>
-          <p class="cart-item-category">${item.category}</p>
-          <p class="cart-item-price">$${item.price.toFixed(2)} USD</p>
-          <div class="cart-item-quantity">
-            <button class="qty-btn qty-minus" data-id="${item.id}">−</button>
-            <span class="qty-value">${item.quantity}</span>
-            <button class="qty-btn qty-plus" data-id="${item.id}">+</button>
+    cartItems.innerHTML = this.cart.map(item => {
+      // Calculate original price (double the discount price)
+      const originalPrice = item.price * 2;
+      
+      return `
+        <div class="cart-item" data-id="${item.id}">
+          <div class="cart-item-image">
+            <img src="${item.image || '/cdn/shop/files/stadium-icon.png'}" alt="${item.title}">
           </div>
+          <div class="cart-item-details">
+            <h4>${item.title}</h4>
+            <p class="cart-item-category">${item.category}</p>
+            <div class="cart-item-price-container">
+              <span class="discount-badge">50% OFF</span>
+              <span class="original-price">$${originalPrice.toFixed(2)}</span>
+              <span class="discount-price">$${item.price.toFixed(2)} USD</span>
+            </div>
+            <div class="cart-item-quantity">
+              <button class="qty-btn qty-minus" data-id="${item.id}">−</button>
+              <span class="qty-value">${item.quantity}</span>
+              <button class="qty-btn qty-plus" data-id="${item.id}">+</button>
+            </div>
+          </div>
+          <button class="cart-item-remove" data-id="${item.id}">Remove</button>
         </div>
-        <button class="cart-item-remove" data-id="${item.id}">Remove</button>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
     if (totalElement) {
       totalElement.textContent = `$${this.getTotal().toFixed(2)} USD`;
@@ -425,7 +434,8 @@ class MongoDBCart {
 
     // Extract data from the card
     const categoryEl = card.querySelector('h3, .ticket-title, .variant-title');
-    const priceEl = card.querySelector('.price-value');
+    // Try to find discount price first, then fallback to regular price
+    const priceEl = card.querySelector('.discount-price') || card.querySelector('.price-value');
     const qtyEl = card.querySelector('.qty-input');
     
     // Get product title from page
@@ -437,6 +447,12 @@ class MongoDBCart {
     // Extract price (remove any non-numeric characters except decimal point)
     const priceText = priceEl?.textContent?.replace(/[^0-9.]/g, '') || '0';
     const price = parseFloat(priceText);
+    
+    console.log('💰 Price extraction:', {
+      priceEl: priceEl,
+      priceText: priceText,
+      price: price
+    });
     
     // Get quantity
     const quantity = parseInt(qtyEl?.value || '1');
