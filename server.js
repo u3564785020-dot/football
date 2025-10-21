@@ -186,6 +186,31 @@ app.get('*', (req, res) => {
   if (path.extname(req.path)) {
     return res.status(404).send('File not found');
   }
+  
+  const requestedPath = req.path;
+  
+  // Check if it's a collection page
+  if (requestedPath.startsWith('/collections/')) {
+    const fileName = requestedPath.replace('/collections/', '') + '.html';
+    const filePath = path.join(__dirname, 'collections', fileName);
+    return res.sendFile(filePath, (err) => {
+      if (err) {
+        res.sendFile(path.join(__dirname, 'index.html'));
+      }
+    });
+  }
+  
+  // Check if it's a product page
+  if (requestedPath.startsWith('/products/')) {
+    const fileName = requestedPath.replace('/products/', '') + '.html';
+    const filePath = path.join(__dirname, 'products', fileName);
+    return res.sendFile(filePath, (err) => {
+      if (err) {
+        res.sendFile(path.join(__dirname, 'index.html'));
+      }
+    });
+  }
+  
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
