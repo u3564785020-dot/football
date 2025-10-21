@@ -4965,6 +4965,22 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
 
 
   <script src="/cart-client.js"></script>
+  
+  <!-- Additional cart synchronization -->
+  <script>
+    // Ensure cart syncs when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => {
+        if (window.mongoCart && window.mongoCart.initialized) {
+          console.log('🔄 Match 28: Syncing cart on load...');
+          window.mongoCart.loadCart().then(() => {
+            window.mongoCart.renderCart();
+            window.mongoCart.updateCartCount();
+          });
+        }
+      }, 1000); // Wait 1 second for cart to initialize
+    });
+  </script>
 
   <!-- MongoDB Cart Sidebar -->
   <div id="cart-overlay"></div>

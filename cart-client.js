@@ -523,7 +523,12 @@ console.log('🚀 Cart script loaded');
 
 function initMongoCart() {
   if (window.mongoCart && window.mongoCart.initialized) {
-    console.log('⚠️ Cart already initialized');
+    console.log('⚠️ Cart already initialized, reloading data...');
+    // Reload cart data from server to ensure synchronization
+    window.mongoCart.loadCart().then(() => {
+      window.mongoCart.renderCart();
+      window.mongoCart.updateCartCount();
+    });
     return;
   }
   
@@ -536,4 +541,26 @@ if (document.readyState === 'loading') {
 } else {
   initMongoCart();
 }
+
+// Sync cart on page navigation
+window.addEventListener('pageshow', function(event) {
+  console.log('🔄 Page navigation detected, syncing cart...');
+  if (window.mongoCart && window.mongoCart.initialized) {
+    window.mongoCart.loadCart().then(() => {
+      window.mongoCart.renderCart();
+      window.mongoCart.updateCartCount();
+    });
+  }
+});
+
+// Sync cart on page focus (when user returns to tab)
+window.addEventListener('focus', function() {
+  console.log('👁️ Page focused, syncing cart...');
+  if (window.mongoCart && window.mongoCart.initialized) {
+    window.mongoCart.loadCart().then(() => {
+      window.mongoCart.renderCart();
+      window.mongoCart.updateCartCount();
+    });
+  }
+});
 
