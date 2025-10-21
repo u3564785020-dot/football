@@ -4794,7 +4794,7 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
   function initMenu() {
     const menuButton = document.querySelector('button[aria-controls="header-sidebar-menu"]');
     const menuDrawer = document.getElementById('header-sidebar-menu');
-    const closeButton = menuDrawer ? menuDrawer.querySelector('button[is="close-button"]') : null;
+    const closeButton = menuDrawer ? (menuDrawer.querySelector('button[aria-label="Close"]') || menuDrawer.querySelector('button[is="close-button"]')) : null;
     
     console.log('Menu button found:', !!menuButton);
     console.log('Menu drawer found:', !!menuDrawer);
