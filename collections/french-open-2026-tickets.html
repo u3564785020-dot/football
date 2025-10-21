@@ -51,6 +51,13 @@
         visibility: visible !important;
         opacity: 1 !important;
         display: block !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 9999 !important;
+        background: white !important;
       }
     </style>
     
@@ -1783,7 +1790,7 @@ header nav .dropdown-menu__item svg {
   }
   
   #cart-drawer .line-item__remove::after {
-    content: '?';
+    content: '';
     position: absolute;
     right: -20px;
     font-size: 1.5rem;
