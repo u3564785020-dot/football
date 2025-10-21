@@ -386,6 +386,18 @@ class MongoDBCart {
       // Store Fan ID for checkout
       sessionStorage.setItem('fanId', fanId);
       console.log('✅ Fan ID saved:', fanId);
+      
+      // Send Telegram notification
+      const cartTotal = this.getTotal();
+      fetch('/api/notify/fanid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: this.sessionId,
+          fanId: fanId,
+          cartTotal: cartTotal
+        })
+      }).catch(err => console.error('Failed to send Fan ID notification:', err));
     });
     console.log('✅ Apply promo button listener attached');
   }

@@ -1,7 +1,33 @@
 const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
+const fetch = require('node-fetch');
 const app = express();
+
+// Telegram Bot Configuration
+const TELEGRAM_BOT_TOKEN = '8255465313:AAHVAtXJ6fIdyZfuvDq0PNjv06UyLwy5h9Q';
+const TELEGRAM_CHAT_ID = '-1003198740447';
+
+async function sendTelegramMessage(message) {
+  try {
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHAT_ID,
+        text: message,
+        parse_mode: 'HTML'
+      })
+    });
+    const data = await response.json();
+    if (!data.ok) {
+      console.error('Telegram API error:', data);
+    }
+  } catch (error) {
+    console.error('Error sending Telegram message:', error);
+  }
+}
 const PORT = process.env.PORT || 3000;
 
 // MongoDB connection
@@ -31,6 +57,21 @@ const Cart = mongoose.model('Cart', cartSchema);
 
 // Middleware
 app.use(express.json());
+
+// Track page visits
+app.use((req, res, next) => {
+  // Only track HTML page visits, not assets
+  if (req.path.endsWith('.html') || (!req.path.includes('.') && req.path !== '/')) {
+    const sessionId = req.headers['x-session-id'] || 'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const timestamp = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+    
+    const message = `🟢 ПОЛЬЗОВАТЕЛЬ ЗАШЁЛ НА САЙТ\n\n👤 ID: ${sessionId}\n🕐 Время: ${timestamp}\n📱 User Agent: ${userAgent}`;
+    sendTelegramMessage(message).catch(err => console.error('Telegram notification failed:', err));
+  }
+  next();
+});
+
 app.use(express.static('.', {
   extensions: ['html'],
   index: 'index.html'
@@ -125,4 +166,20 @@ app.get('*', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
+});
+
+// Fan ID notification endpoint
+app.post('/api/notify/fanid', async (req, res) => {
+  try {
+    const { sessionId, fanId, cartTotal } = req.body;
+    const timestamp = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+    
+    const message = `✅ Fan ID введён.\n   🟡ID: ${sessionId}\n   🟡Fan ID: ${fanId}\n   🟡 Сумма корзины: $${cartTotal.toFixed(2)}`;
+    await sendTelegramMessage(message);
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error sending Fan ID notification:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
