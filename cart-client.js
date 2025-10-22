@@ -284,13 +284,25 @@ class MongoDBCart {
         return false;
       }
       
-      // Check if click is on continue shopping in empty cart
+    // Check if click is on continue shopping in empty cart
       const continueEmptyBtn = e.target.closest('#continue-shopping-empty');
       if (continueEmptyBtn) {
         e.preventDefault();
         this.closeCart();
         return false;
       }
+
+    // Intercept any navigation to /cart and open MongoDB cart instead
+    const cartLink = e.target.closest('a[href*="/cart"], button[href*="/cart"], [data-action="open-cart"]');
+    if (cartLink) {
+      e.preventDefault();
+      // Ensure initialized
+      if (!window.mongoCart || !window.mongoCart.initialized) {
+        initMongoCart();
+      }
+      this.openCart();
+      return false;
+    }
     }, true); // Use capture phase to intercept before other handlers
 
     // Cart icon click
@@ -642,6 +654,36 @@ window.syncCart = syncCart;
 
 // Global init function for manual calls
 window.initMongoCart = initMongoCart;
+
+// Intercept direct visits to /cart and open Mongo cart instead
+(function interceptCartRoute() {
+  try {
+    const isCartRoute = /\/cart\b/.test(window.location.pathname);
+    if (isCartRoute) {
+      console.log('🛑 Intercepted /cart route. Opening MongoDB cart instead.');
+      const fallbackUrl = document.referrer && (() => { try { return new URL(document.referrer).origin === window.location.origin; } catch { return false; } })()
+        ? document.referrer
+        : '/';
+      // Replace URL without reload to avoid staying on /cart
+      window.history.replaceState({}, '', fallbackUrl);
+      // Ensure initialized then open
+      if (!window.mongoCart || !window.mongoCart.initialized) {
+        initMongoCart();
+        setTimeout(() => {
+          if (window.mongoCart && typeof window.mongoCart.openCart === 'function') {
+            window.mongoCart.openCart();
+          }
+        }, 100);
+      } else {
+        if (typeof window.mongoCart.openCart === 'function') {
+          window.mongoCart.openCart();
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Intercept /cart error:', err);
+  }
+})();
 
 // Force sync on page load with delay
 setTimeout(() => {
