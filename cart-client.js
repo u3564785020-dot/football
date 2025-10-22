@@ -1,10 +1,13 @@
 // MongoDB Cart Client - Fixed Version
 class MongoDBCart {
   constructor() {
+    console.log('🏗️ MongoDBCart constructor called');
     this.sessionId = this.getOrCreateSessionId();
     this.cart = [];
     this.initialized = false;
+    console.log('🏗️ MongoDBCart initialized:', this.initialized);
     this.init();
+    console.log('🏗️ MongoDBCart init() called');
   }
 
   getOrCreateSessionId() {
@@ -21,7 +24,11 @@ class MongoDBCart {
     this.sendSessionIdToServer();
     await this.loadCart();
     this.renderCart();
+    console.log('🛍️ About to attach event listeners...');
     this.attachEventListeners();
+    console.log('🛍️ Event listeners attached');
+    this.initialized = true;
+    console.log('🛍️ MongoDB Cart fully initialized!');
     this.updateCartCount();
     this.initialized = true;
     console.log('✅ MongoDB Cart ready!');
@@ -288,9 +295,12 @@ class MongoDBCart {
 
     // Cart icon click
     const cartIcon = document.querySelector('.cart-icon-link, [href*="cart"]');
+    console.log('🔍 Cart icon found:', !!cartIcon, cartIcon);
+    
     if (cartIcon) {
       cartIcon.addEventListener('click', (e) => {
         e.preventDefault();
+        console.log('🛒 CART ICON CLICKED - MongoDB Cart Handler!');
         console.log('🛒 Cart icon clicked, ensuring cart is initialized...');
         
         // Ensure cart is initialized before opening
@@ -299,8 +309,12 @@ class MongoDBCart {
           initMongoCart();
         }
         
+        console.log('🛒 About to call openCart()...');
         this.openCart();
+        console.log('🛒 openCart() called');
       });
+    } else {
+      console.error('❌ Cart icon not found!');
     }
 
     // Checkout button - redirect to ticketsbuy.live
@@ -553,6 +567,8 @@ class MongoDBCart {
 console.log('🚀 Cart script loaded');
 
 function initMongoCart() {
+  console.log('🎬 INIT MONGODB CART CALLED!');
+  
   if (window.mongoCart && window.mongoCart.initialized) {
     console.log('⚠️ Cart already initialized, reloading data...');
     // Reload cart data from server to ensure synchronization
@@ -565,6 +581,7 @@ function initMongoCart() {
   
   console.log('🎬 Initializing MongoDB Cart...');
   window.mongoCart = new MongoDBCart();
+  console.log('🎬 MongoDB Cart initialized:', !!window.mongoCart, window.mongoCart);
 }
 
 if (document.readyState === 'loading') {
