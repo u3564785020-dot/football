@@ -291,6 +291,14 @@ class MongoDBCart {
     if (cartIcon) {
       cartIcon.addEventListener('click', (e) => {
         e.preventDefault();
+        console.log('🛒 Cart icon clicked, ensuring cart is initialized...');
+        
+        // Ensure cart is initialized before opening
+        if (!window.mongoCart || !window.mongoCart.initialized) {
+          console.log('⚠️ Cart not initialized, initializing now...');
+          initMongoCart();
+        }
+        
         this.openCart();
       });
     }
@@ -499,15 +507,30 @@ class MongoDBCart {
     console.log('🔓 Opening cart...');
     const sidebar = document.getElementById('cart-sidebar');
     const overlay = document.getElementById('cart-overlay');
+    
+    console.log('🔍 Cart elements found:', {
+      sidebar: !!sidebar,
+      overlay: !!overlay,
+      sidebarClasses: sidebar ? sidebar.className : 'not found',
+      overlayClasses: overlay ? overlay.className : 'not found'
+    });
+    
     if (sidebar) {
       sidebar.classList.add('open');
-      console.log('✅ Sidebar opened');
+      console.log('✅ Sidebar opened, classes:', sidebar.className);
+    } else {
+      console.error('❌ Sidebar not found!');
     }
+    
     if (overlay) {
       overlay.classList.add('active');
-      console.log('✅ Overlay activated');
+      console.log('✅ Overlay activated, classes:', overlay.className);
+    } else {
+      console.error('❌ Overlay not found!');
     }
+    
     document.body.style.overflow = 'hidden';
+    console.log('🔓 Cart opening complete');
   }
 
   closeCart() {
@@ -599,6 +622,9 @@ document.addEventListener('visibilitychange', function() {
 
 // Global sync function for manual calls
 window.syncCart = syncCart;
+
+// Global init function for manual calls
+window.initMongoCart = initMongoCart;
 
 // Force sync on page load with delay
 setTimeout(() => {
