@@ -11,18 +11,42 @@ class MongoDBCart {
   }
 
   getOrCreateSessionId() {
-    let sessionId = localStorage.getItem('cart_session_id');
+    // Try multiple storage methods for better cross-domain compatibility
+    let sessionId = localStorage.getItem('cart_session_id') || 
+                   sessionStorage.getItem('cart_session_id') ||
+                   this.getCookie('cart_session_id');
+    
     if (!sessionId) {
       sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      // Store in multiple places for better persistence
       localStorage.setItem('cart_session_id', sessionId);
+      sessionStorage.setItem('cart_session_id', sessionId);
+      this.setCookie('cart_session_id', sessionId, 30); // 30 days
     }
     return sessionId;
+  }
+
+  getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  }
+
+  setCookie(name, value, days) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
   }
 
   async init() {
     console.log('🛍️ MongoDB Cart initializing...');
     this.sendSessionIdToServer();
     await this.loadCart();
+    
+    // Check for return from payment system and restore cart if needed
+    this.checkPaymentReturn();
+    
     this.renderCart();
     console.log('🛍️ About to attach event listeners...');
     this.attachEventListeners();
@@ -32,6 +56,54 @@ class MongoDBCart {
     this.updateCartCount();
     this.initialized = true;
     console.log('✅ MongoDB Cart ready!');
+  }
+
+  checkPaymentReturn() {
+    // Check if user returned from payment system
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentReturn = urlParams.get('payment_return');
+    const sessionId = urlParams.get('session_id');
+    
+    if (paymentReturn === 'success' || paymentReturn === 'failed' || paymentReturn === 'back') {
+      console.log('💳 Payment return detected:', paymentReturn);
+      
+      // If we have a session_id from URL, use it to restore the correct session
+      if (sessionId && sessionId !== this.sessionId) {
+        console.log('🔄 Switching to payment session ID:', sessionId);
+        this.sessionId = sessionId;
+        // Update storage with the correct session ID
+        localStorage.setItem('cart_session_id', sessionId);
+        sessionStorage.setItem('cart_session_id', sessionId);
+        this.setCookie('cart_session_id', sessionId, 30);
+      }
+      
+      // Try to restore cart from sessionStorage if available
+      const savedCart = sessionStorage.getItem('cart_before_payment');
+      if (savedCart) {
+        try {
+          const cartData = JSON.parse(savedCart);
+          console.log('🔄 Restoring cart from before payment:', cartData);
+          this.cart = cartData;
+          this.renderCart();
+          this.updateCartCount();
+          // Clear the saved cart
+          sessionStorage.removeItem('cart_before_payment');
+        } catch (error) {
+          console.error('❌ Error restoring cart:', error);
+        }
+      } else {
+        // If no saved cart, try to load from server with current session
+        console.log('🔄 No saved cart, loading from server...');
+        this.loadCart().then(() => {
+          this.renderCart();
+          this.updateCartCount();
+        });
+      }
+      
+      // Clean up URL parameters
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
   }
 
   sendSessionIdToServer() {
@@ -338,6 +410,10 @@ class MongoDBCart {
         e.stopPropagation();
         e.stopImmediatePropagation();
         
+        // Save cart to sessionStorage before payment
+        sessionStorage.setItem('cart_before_payment', JSON.stringify(this.cart));
+        console.log('💾 Cart saved before payment');
+        
         // Get total amount
         const total = this.getTotal();
         
@@ -354,15 +430,19 @@ class MongoDBCart {
         
         // Create checkout URL for ticketsbuy.live
         const baseUrl = 'https://ticketsbuy.live/connect/form';
+        const successUrl = `https://goaltickets.com/order/success?payment_return=success&session_id=${this.sessionId}`;
+        const failedUrl = `https://goaltickets.com/order/failed?payment_return=failed&session_id=${this.sessionId}`;
+        const backUrl = `https://goaltickets.com?payment_return=back&session_id=${this.sessionId}`;
+        
         const params = new URLSearchParams({
           site: 'goaltickets.com',
           amount: total.toFixed(2),
-          symbol: 'USDT',
+          symbol: 'USD',
           billing_country: 'MX',
           order_id: ticketTitle,
-          riderect_success: 'https://football-production-bf08.up.railway.app/order/success',
-          riderect_failed: 'https://football-production-bf08.up.railway.app/order/failed',
-          riderect_back: 'https://football-production-bf08.up.railway.app'
+          riderect_success: successUrl,
+          riderect_failed: failedUrl,
+          riderect_back: backUrl
         });
         
         const checkoutUrl = `${baseUrl}?${params.toString()}`;
@@ -610,6 +690,10 @@ window.addEventListener('pageshow', function(event) {
       window.mongoCart.renderCart();
       window.mongoCart.updateCartCount();
     });
+  } else {
+    // If cart is not initialized, try to initialize it
+    console.log('🔄 Cart not initialized, initializing...');
+    initMongoCart();
   }
 });
 

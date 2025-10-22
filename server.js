@@ -211,6 +211,17 @@ app.get('*', (req, res) => {
     });
   }
   
+  // Check if it's an order page
+  if (requestedPath.startsWith('/order/')) {
+    const fileName = requestedPath.replace('/order/', '') + '.html';
+    const filePath = path.join(__dirname, 'order', fileName);
+    return res.sendFile(filePath, (err) => {
+      if (err) {
+        res.sendFile(path.join(__dirname, 'index.html'));
+      }
+    });
+  }
+  
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
