@@ -564,3 +564,37 @@ window.addEventListener('focus', function() {
   }
 });
 
+// Enhanced cart synchronization
+function syncCart() {
+  console.log('🔄 Manual cart sync triggered...');
+  if (window.mongoCart && window.mongoCart.initialized) {
+    window.mongoCart.loadCart().then(() => {
+      window.mongoCart.renderCart();
+      window.mongoCart.updateCartCount();
+      console.log('✅ Cart synced successfully');
+    }).catch(err => {
+      console.error('❌ Cart sync failed:', err);
+    });
+  } else {
+    console.log('⚠️ Cart not initialized, initializing...');
+    initMongoCart();
+  }
+}
+
+// Sync cart when page becomes visible
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden) {
+    console.log('👁️ Page became visible, syncing cart...');
+    setTimeout(syncCart, 100);
+  }
+});
+
+// Global sync function for manual calls
+window.syncCart = syncCart;
+
+// Force sync on page load with delay
+setTimeout(() => {
+  console.log('🔄 Force sync on page load...');
+  syncCart();
+}, 2000);
+

@@ -4617,6 +4617,8 @@ document.addEventListener('DOMContentLoaded', function() {
   <script>
   document.addEventListener('DOMContentLoaded', function() {
     console.log('=== PAGE BLOCKER SCRIPT LOADED ===');
+    console.log('Current URL:', window.location.href);
+    console.log('Current pathname:', window.location.pathname);
     
     // List of blocked pages
     const blockedPages = [
@@ -4626,17 +4628,31 @@ document.addEventListener('DOMContentLoaded', function() {
       'champions-league-final-tickets'
     ];
     
+    console.log('Blocked pages:', blockedPages);
+    
     // Check if current page should be blocked
     const currentPath = window.location.pathname;
-    const isBlocked = blockedPages.some(page => currentPath.includes(page));
+    console.log('Checking path:', currentPath);
+    
+    const isBlocked = blockedPages.some(page => {
+      const includes = currentPath.includes(page);
+      console.log(`Checking "${page}": ${includes}`);
+      return includes;
+    });
+    
+    console.log('Is blocked:', isBlocked);
     
     if (isBlocked) {
       console.log('Page is blocked, showing blocker modal');
       const blocker = document.getElementById('page-blocker');
+      console.log('Blocker element found:', !!blocker);
       if (blocker) {
         blocker.style.display = 'flex';
+        console.log('Blocker modal displayed');
         // Prevent scrolling
         document.body.style.overflow = 'hidden';
+      } else {
+        console.error('Blocker element not found!');
       }
     } else {
       console.log('Page is not blocked, allowing normal access');

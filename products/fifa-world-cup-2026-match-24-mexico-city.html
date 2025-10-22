@@ -4922,17 +4922,42 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
   
   <!-- Additional cart synchronization -->
   <script>
-    // Ensure cart syncs when page loads
+    // Enhanced cart synchronization for Match 24
     document.addEventListener('DOMContentLoaded', function() {
+      console.log('⚽ Match 24: DOM loaded, setting up cart sync...');
+      
+      // Multiple sync attempts with different delays
+      const syncAttempts = [500, 1000, 2000, 3000];
+      
+      syncAttempts.forEach((delay, index) => {
+        setTimeout(() => {
+          console.log(`🔄 Match 24: Sync attempt ${index + 1} (${delay}ms delay)...`);
+          if (window.mongoCart && window.mongoCart.initialized) {
+            window.mongoCart.loadCart().then(() => {
+              window.mongoCart.renderCart();
+              window.mongoCart.updateCartCount();
+              console.log(`✅ Match 24: Sync attempt ${index + 1} successful`);
+            }).catch(err => {
+              console.error(`❌ Match 24: Sync attempt ${index + 1} failed:`, err);
+            });
+          } else {
+            console.log(`⚠️ Match 24: Cart not initialized on attempt ${index + 1}`);
+            if (window.initMongoCart) {
+              window.initMongoCart();
+            }
+          }
+        }, delay);
+      });
+    });
+    
+    // Additional sync on window load
+    window.addEventListener('load', function() {
+      console.log('⚽ Match 24: Window loaded, syncing cart...');
       setTimeout(() => {
-        if (window.mongoCart && window.mongoCart.initialized) {
-          console.log('🔄 Match 24: Syncing cart on load...');
-          window.mongoCart.loadCart().then(() => {
-            window.mongoCart.renderCart();
-            window.mongoCart.updateCartCount();
-          });
+        if (window.syncCart) {
+          window.syncCart();
         }
-      }, 1000); // Wait 1 second for cart to initialize
+      }, 1000);
     });
   </script>
 
