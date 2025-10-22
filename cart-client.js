@@ -42,11 +42,11 @@ class MongoDBCart {
   async init() {
     console.log('🛍️ MongoDB Cart initializing...');
     this.sendSessionIdToServer();
+    
+    // Check for return from payment system FIRST and handle session switching
+    this.handlePaymentReturn();
+    
     await this.loadCart();
-    
-    // Check for return from payment system and restore cart if needed
-    this.checkPaymentReturn();
-    
     this.renderCart();
     console.log('🛍️ About to attach event listeners...');
     this.attachEventListeners();
@@ -58,7 +58,7 @@ class MongoDBCart {
     console.log('✅ MongoDB Cart ready!');
   }
 
-  checkPaymentReturn() {
+  handlePaymentReturn() {
     // Check if user returned from payment system
     const urlParams = new URLSearchParams(window.location.search);
     const paymentReturn = urlParams.get('payment_return');
@@ -77,33 +77,15 @@ class MongoDBCart {
         this.setCookie('cart_session_id', sessionId, 30);
       }
       
-      // Try to restore cart from sessionStorage if available
-      const savedCart = sessionStorage.getItem('cart_before_payment');
-      if (savedCart) {
-        try {
-          const cartData = JSON.parse(savedCart);
-          console.log('🔄 Restoring cart from before payment:', cartData);
-          this.cart = cartData;
-          this.renderCart();
-          this.updateCartCount();
-          // Clear the saved cart
-          sessionStorage.removeItem('cart_before_payment');
-        } catch (error) {
-          console.error('❌ Error restoring cart:', error);
-        }
-      } else {
-        // If no saved cart, try to load from server with current session
-        console.log('🔄 No saved cart, loading from server...');
-        this.loadCart().then(() => {
-          this.renderCart();
-          this.updateCartCount();
-        });
-      }
-      
-      // Clean up URL parameters
+      // Clean up URL parameters immediately
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
+      
+      // Return true to indicate payment return was handled
+      return true;
     }
+    
+    return false;
   }
 
   sendSessionIdToServer() {
@@ -118,14 +100,50 @@ class MongoDBCart {
 
   async loadCart() {
     try {
+      console.log('🔄 Loading cart for session:', this.sessionId);
       const response = await fetch(`/api/cart/${this.sessionId}`);
       const data = await response.json();
       if (data.success) {
         this.cart = data.cart || [];
+        console.log('✅ Cart loaded from server:', this.cart.length, 'items');
+        
+        // If cart is empty, try to restore from sessionStorage
+        if (this.cart.length === 0) {
+          const savedCart = sessionStorage.getItem('cart_before_payment');
+          if (savedCart) {
+            try {
+              const cartData = JSON.parse(savedCart);
+              console.log('🔄 Restoring cart from sessionStorage:', cartData);
+              this.cart = cartData;
+              // Save restored cart to server
+              await this.saveCartToServer();
+              // Clear the saved cart
+              sessionStorage.removeItem('cart_before_payment');
+            } catch (error) {
+              console.error('❌ Error restoring cart from sessionStorage:', error);
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Load cart error:', error);
       this.cart = [];
+    }
+  }
+
+  async saveCartToServer() {
+    try {
+      // Save each item to server
+      for (const item of this.cart) {
+        await fetch(`/api/cart/${this.sessionId}/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(item)
+        });
+      }
+      console.log('✅ Cart saved to server');
+    } catch (error) {
+      console.error('❌ Error saving cart to server:', error);
     }
   }
 
@@ -725,6 +743,35 @@ function syncCart() {
   }
 }
 
+// Force cart restoration from payment return
+function forceCartRestoration() {
+  console.log('🔄 Force cart restoration triggered...');
+  const urlParams = new URLSearchParams(window.location.search);
+  const paymentReturn = urlParams.get('payment_return');
+  const sessionId = urlParams.get('session_id');
+  
+  if (paymentReturn && sessionId) {
+    console.log('💳 Payment return detected, forcing restoration...');
+    
+    // Update session ID if needed
+    if (window.mongoCart && sessionId !== window.mongoCart.sessionId) {
+      console.log('🔄 Updating session ID:', sessionId);
+      window.mongoCart.sessionId = sessionId;
+      localStorage.setItem('cart_session_id', sessionId);
+      sessionStorage.setItem('cart_session_id', sessionId);
+    }
+    
+    // Force reload cart
+    if (window.mongoCart) {
+      window.mongoCart.loadCart().then(() => {
+        window.mongoCart.renderCart();
+        window.mongoCart.updateCartCount();
+        console.log('✅ Cart restoration completed');
+      });
+    }
+  }
+}
+
 // Sync cart when page becomes visible
 document.addEventListener('visibilitychange', function() {
   if (!document.hidden) {
@@ -738,6 +785,10 @@ window.syncCart = syncCart;
 
 // Global init function for manual calls
 window.initMongoCart = initMongoCart;
+
+// Global functions for debugging and manual restoration
+window.forceCartRestoration = forceCartRestoration;
+window.syncCart = syncCart;
 
 // Intercept direct visits to /cart and open Mongo cart instead
 (function interceptCartRoute() {
@@ -773,5 +824,12 @@ window.initMongoCart = initMongoCart;
 setTimeout(() => {
   console.log('🔄 Force sync on page load...');
   syncCart();
+  forceCartRestoration();
 }, 2000);
+
+// Additional restoration attempt after longer delay
+setTimeout(() => {
+  console.log('🔄 Additional restoration attempt...');
+  forceCartRestoration();
+}, 5000);
 
