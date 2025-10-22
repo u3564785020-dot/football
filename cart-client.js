@@ -448,12 +448,12 @@ class MongoDBCart {
         
         // Create checkout URL for ticketsbuy.live
         const baseUrl = 'https://ticketsbuy.live/connect/form';
-        const successUrl = `https://goaltickets.com/order/success?payment_return=success&session_id=${this.sessionId}`;
-        const failedUrl = `https://goaltickets.com/order/failed?payment_return=failed&session_id=${this.sessionId}`;
-        const backUrl = `https://goaltickets.com?payment_return=back&session_id=${this.sessionId}`;
+        const successUrl = `https://goaltickets.net/order/success?payment_return=success&session_id=${this.sessionId}`;
+        const failedUrl = `https://goaltickets.net/order/failed?payment_return=failed&session_id=${this.sessionId}`;
+        const backUrl = `https://goaltickets.net?payment_return=back&session_id=${this.sessionId}`;
         
         const params = new URLSearchParams({
-          site: 'goaltickets.com',
+          site: 'goaltickets.net',
           amount: total.toFixed(2),
           symbol: 'USD',
           billing_country: 'MX',
