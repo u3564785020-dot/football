@@ -1476,6 +1476,14 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
     animation: addToCart 0.6s ease;
   }
   
+  /* DISABLE SHOPIFY CART - HIDE BUT KEEP CODE */
+  #shopify-section-sections--18943542788288__cart-drawer {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+  
   /* Trust Badges */
   #cart-drawer::after {
     content: 'Secure Checkout 100% Guaranteed';
@@ -4783,6 +4791,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="cart-body">
       <div id="cart-empty" class="cart-empty">
         <p>Your cart is empty</p>
+        <button id="continue-shopping-empty" class="cart-btn tertiary">Continue shopping</button>
       </div>
       <div id="cart-items" class="cart-items"></div>
     </div>

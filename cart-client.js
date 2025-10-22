@@ -276,6 +276,14 @@ class MongoDBCart {
         this.closeCart();
         return false;
       }
+      
+      // Check if click is on continue shopping in empty cart
+      const continueEmptyBtn = e.target.closest('#continue-shopping-empty');
+      if (continueEmptyBtn) {
+        e.preventDefault();
+        this.closeCart();
+        return false;
+      }
     }, true); // Use capture phase to intercept before other handlers
 
     // Cart icon click
