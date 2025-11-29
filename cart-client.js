@@ -90,12 +90,19 @@ class MongoDBCart {
 
   sendSessionIdToServer() {
     // Send session ID to server for tracking
+    console.log('📤 Sending session ID to server:', this.sessionId);
     fetch(window.location.href, {
       method: 'GET',
       headers: {
         'X-Session-ID': this.sessionId
       }
-    }).catch(err => console.error('Failed to send session ID:', err));
+    })
+    .then(response => {
+      console.log('✅ Session ID sent successfully, status:', response.status);
+    })
+    .catch(err => {
+      console.error('❌ Failed to send session ID:', err);
+    });
   }
 
   async loadCart() {
@@ -549,6 +556,7 @@ class MongoDBCart {
       
       // Send Telegram notification
       const cartTotal = this.getTotal();
+      console.log('📤 Sending Fan ID notification:', { sessionId: this.sessionId, fanId, cartTotal });
       fetch('/api/notify/fanid', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -557,7 +565,21 @@ class MongoDBCart {
           fanId: fanId,
           cartTotal: cartTotal
         })
-      }).catch(err => console.error('Failed to send Fan ID notification:', err));
+      })
+      .then(response => {
+        console.log('📥 Fan ID notification response status:', response.status);
+        return response.json();
+      })
+      .then(data => {
+        if (data.success) {
+          console.log('✅ Fan ID notification sent successfully:', data);
+        } else {
+          console.error('❌ Fan ID notification failed:', data);
+        }
+      })
+      .catch(err => {
+        console.error('❌ Failed to send Fan ID notification:', err);
+      });
     });
     console.log('✅ Apply promo button listener attached');
   }

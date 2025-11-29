@@ -66,6 +66,7 @@ app.use(async (req, res, next) => {
   
   if (isHomepage) {
     const sessionId = req.headers['x-session-id'];
+    console.log('🔍 Page visit tracking:', { path: req.path, sessionId, isHomepage });
     
     if (sessionId && sessionId !== 'unknown') {
       try {
@@ -75,23 +76,31 @@ app.use(async (req, res, next) => {
         if (!cart) {
           // Create new cart entry
           cart = await Cart.create({ sessionId: sessionId, items: [], notificationSent: false });
+          console.log('📝 Created new cart entry for session:', sessionId);
         }
         
         // Send notification only if not sent before
         if (!cart.notificationSent) {
           const userAgent = req.headers['user-agent'] || 'unknown';
           const timestamp = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+          const ip = req.ip || req.connection.remoteAddress || 'unknown';
           
-          const message = `🟢 ПОЛЬЗОВАТЕЛЬ ЗАШЁЛ НА САЙТ\n\n👤 ID: ${sessionId}\n🕐 Время: ${timestamp}\n📱 User Agent: ${userAgent}`;
-          sendTelegramMessage(message).catch(err => console.error('Telegram notification failed:', err));
+          const message = `🟢 ПОЛЬЗОВАТЕЛЬ ЗАШЁЛ НА САЙТ\n\n👤 ID: ${sessionId}\n🕐 Время: ${timestamp}\n📱 User Agent: ${userAgent}\n🌐 IP: ${ip}`;
+          console.log('📤 Sending page visit notification:', message);
+          await sendTelegramMessage(message);
+          console.log('✅ Page visit notification sent successfully');
           
           // Mark notification as sent
           cart.notificationSent = true;
           await cart.save();
+        } else {
+          console.log('ℹ️ Notification already sent for this session:', sessionId);
         }
       } catch (error) {
-        console.error('Error tracking page visit:', error);
+        console.error('❌ Error tracking page visit:', error);
       }
+    } else {
+      console.log('⚠️ No valid session ID found in headers');
     }
   }
   next();
@@ -233,14 +242,25 @@ app.listen(PORT, '0.0.0.0', () => {
 app.post('/api/notify/fanid', async (req, res) => {
   try {
     const { sessionId, fanId, cartTotal } = req.body;
-    const timestamp = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+    console.log('📥 Received Fan ID notification request:', { sessionId, fanId, cartTotal });
     
-    const message = `✅ Fan ID введён.\n   🟡ID: ${sessionId}\n   🟡Fan ID: ${fanId}\n   🟡 Сумма корзины: $${cartTotal.toFixed(2)}`;
-    await sendTelegramMessage(message);
+    if (!sessionId || !fanId) {
+      console.error('❌ Missing required fields:', { sessionId: !!sessionId, fanId: !!fanId });
+      return res.status(400).json({ success: false, error: 'Missing required fields' });
+    }
+    
+    const timestamp = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    
+    const message = `✅ Fan ID введён\n\n👤 ID: ${sessionId}\n🎫 Fan ID: ${fanId}\n💰 Сумма корзины: $${cartTotal.toFixed(2)}\n🕐 Время: ${timestamp}\n🌐 IP: ${ip}`;
+    console.log('📤 Sending Fan ID notification:', message);
+    
+    const result = await sendTelegramMessage(message);
+    console.log('✅ Fan ID notification sent successfully:', result);
     
     res.json({ success: true });
   } catch (error) {
-    console.error('Error sending Fan ID notification:', error);
+    console.error('❌ Error sending Fan ID notification:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
