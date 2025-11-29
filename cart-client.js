@@ -461,24 +461,13 @@ class MongoDBCart {
         
         const params = new URLSearchParams({
           site: 'goaltickets.net',
-          icon: 'https://s6.imgcdn.dev/8xixd.png',
-          image: 'https://s6.imgcdn.dev/8xQsM.png',
           amount: total.toFixed(2),
           symbol: 'USD',
-          vat: '20',
+          billing_country: 'MX',
+          order_id: ticketTitle,
           riderect_success: successUrl,
           riderect_failed: failedUrl,
-          riderect_back: backUrl,
-          order_id: ticketTitle,
-          billing_country: 'MX',
-          billing_first_name: '',
-          billing_last_name: '',
-          billing_address_1: '',
-          billing_city: '',
-          billing_state: '',
-          billing_postcode: '',
-          billing_email: '',
-          billing_phone: ''
+          riderect_back: backUrl
         });
         
         const checkoutUrl = `${baseUrl}?${params.toString()}`;
