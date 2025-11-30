@@ -181,10 +181,20 @@ class MongoDBCart {
 
   async updateQuantity(itemId, quantity) {
     try {
+      // Enforce maximum of 4 tickets
+      const maxQuantity = 4;
+      const finalQuantity = Math.min(parseInt(quantity) || 1, maxQuantity);
+      const minQuantity = 1;
+      const clampedQuantity = Math.max(minQuantity, finalQuantity);
+      
+      if (clampedQuantity !== parseInt(quantity)) {
+        console.log(`⚠️ Quantity clamped to ${clampedQuantity} (max: ${maxQuantity})`);
+      }
+      
       const response = await fetch(`/api/cart/${this.sessionId}/update/${itemId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quantity })
+        body: JSON.stringify({ quantity: clampedQuantity })
       });
       const data = await response.json();
       if (data.success) {
@@ -195,6 +205,19 @@ class MongoDBCart {
     } catch (error) {
       console.error('Update quantity error:', error);
     }
+  }
+  
+  showMaxQuantityNotification() {
+    const notification = document.createElement('div');
+    notification.style.cssText = 'position:fixed;top:20px;right:20px;background:#f44336;color:white;padding:12px 20px;border-radius:8px;z-index:10000;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+    notification.textContent = 'Maximum 4 tickets allowed';
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      notification.style.transition = 'opacity 0.3s';
+      setTimeout(() => notification.remove(), 300);
+    }, 2000);
   }
 
   async removeFromCart(itemId) {
