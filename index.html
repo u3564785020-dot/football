@@ -1557,10 +1557,134 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
       }
     });
     
-    // Quantity button enhancements
+    // Universal Quantity Control Script for all products
+    function initQuantityControls() {
+      console.log('🔢 Initializing quantity controls...');
+      
+      // Handle increase buttons (+, qty-increase)
+      document.querySelectorAll('.qty-increase, .quantity-selector button:last-child, button[class*="increase"]').forEach(button => {
+        // Remove old listeners by cloning
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
+        
+        newButton.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const quantitySelector = this.closest('.quantity-selector');
+          const input = quantitySelector ? quantitySelector.querySelector('.qty-input, input[type="number"]') : null;
+          
+          if (input) {
+            let currentValue = parseInt(input.value) || 1;
+            const maxValue = parseInt(input.getAttribute('max')) || 4;
+            
+            if (currentValue < maxValue) {
+              input.value = currentValue + 1;
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+              console.log(`✅ Increased quantity to ${input.value}`);
+            } else {
+              console.log(`⚠️ Maximum quantity (${maxValue}) reached`);
+              showQuantityNotification(input, `Maximum ${maxValue} tickets allowed`);
+            }
+          }
+        });
+      });
+      
+      // Handle decrease buttons (-, qty-decrease)
+      document.querySelectorAll('.qty-decrease, .quantity-selector button:first-child, button[class*="decrease"]').forEach(button => {
+        // Remove old listeners by cloning
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
+        
+        newButton.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const quantitySelector = this.closest('.quantity-selector');
+          const input = quantitySelector ? quantitySelector.querySelector('.qty-input, input[type="number"]') : null;
+          
+          if (input) {
+            let currentValue = parseInt(input.value) || 1;
+            const minValue = parseInt(input.getAttribute('min')) || 1;
+            
+            if (currentValue > minValue) {
+              input.value = currentValue - 1;
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+              console.log(`✅ Decreased quantity to ${input.value}`);
+            } else {
+              console.log(`⚠️ Minimum quantity (${minValue}) reached`);
+            }
+          }
+        });
+      });
+      
+      // Ensure all quantity inputs have max="4"
+      document.querySelectorAll('.qty-input, input[type="number"][class*="qty"]').forEach(input => {
+        if (!input.hasAttribute('max') || parseInt(input.getAttribute('max')) > 4) {
+          input.setAttribute('max', '4');
+        }
+        if (!input.hasAttribute('min')) {
+          input.setAttribute('min', '1');
+        }
+        
+        // Handle direct input
+        input.addEventListener('input', function(e) {
+          let value = parseInt(this.value) || 1;
+          const minValue = parseInt(this.getAttribute('min')) || 1;
+          const maxValue = parseInt(this.getAttribute('max')) || 4;
+          
+          if (value < minValue) {
+            this.value = minValue;
+          } else if (value > maxValue) {
+            this.value = maxValue;
+            showQuantityNotification(this, `Maximum ${maxValue} tickets allowed`);
+          }
+        });
+        
+        // Prevent invalid characters
+        input.addEventListener('keypress', function(e) {
+          if (e.key < '0' || e.key > '9') {
+            e.preventDefault();
+          }
+        });
+      });
+      
+      console.log('✅ Quantity controls initialized');
+    }
+    
+    // Initialize on page load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initQuantityControls);
+    } else {
+      initQuantityControls();
+    }
+    
+    // Re-initialize when new content is added (for dynamic content)
+    const observer = new MutationObserver(function(mutations) {
+      let shouldReinit = false;
+      mutations.forEach(function(mutation) {
+        if (mutation.addedNodes.length > 0) {
+          mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1 && (node.classList?.contains('quantity-selector') || node.querySelector?.('.quantity-selector'))) {
+              shouldReinit = true;
+            }
+          });
+        }
+      });
+      if (shouldReinit) {
+        setTimeout(initQuantityControls, 100);
+      }
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+    
+    // Quantity button visual enhancements
     document.addEventListener('click', function(e) {
-      if (e.target.matches('.quantity-selector button')) {
-        const input = e.target.parentElement.querySelector('input');
+      if (e.target.matches('.quantity-selector button, .qty-btn')) {
+        const input = e.target.closest('.quantity-selector')?.querySelector('input');
         if (input) {
           input.style.transform = 'scale(1.2)';
           input.style.color = '#667eea';
@@ -1571,6 +1695,20 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
         }
       }
     });
+    
+    // Notification function
+    function showQuantityNotification(element, message) {
+      const notification = document.createElement('div');
+      notification.style.cssText = 'position:fixed;top:20px;right:20px;background:#f44336;color:white;padding:12px 20px;border-radius:8px;z-index:10000;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.3s';
+        setTimeout(() => notification.remove(), 300);
+      }, 2000);
+    }
   });
 </script><style>
   /* Force hide dark mode toggle */

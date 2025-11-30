@@ -327,7 +327,14 @@ class MongoDBCart {
         const itemId = e.target.dataset.id;
         const item = this.cart.find(i => i.id === itemId);
         if (item) {
-          this.updateQuantity(itemId, item.quantity + 1);
+          const newQuantity = item.quantity + 1;
+          const maxQuantity = 4;
+          if (newQuantity <= maxQuantity) {
+            this.updateQuantity(itemId, newQuantity);
+          } else {
+            console.log(`⚠️ Maximum quantity (${maxQuantity}) reached`);
+            this.showMaxQuantityNotification();
+          }
         }
       });
     });
@@ -616,8 +623,9 @@ class MongoDBCart {
       price: price
     });
     
-    // Get quantity
-    const quantity = parseInt(qtyEl?.value || '1');
+    // Get quantity (max 4 tickets)
+    const rawQuantity = parseInt(qtyEl?.value || '1');
+    const quantity = Math.min(Math.max(1, rawQuantity), 4);
     
     // Get image
     const productImage = document.querySelector('.product-image img, .product-gallery img')?.src || '';
