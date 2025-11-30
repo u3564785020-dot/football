@@ -5387,95 +5387,87 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
   document.addEventListener('DOMContentLoaded', function() {
     console.log('=== QUANTITY CONTROL SCRIPT LOADED ===');
     
-    function initQuantityButtons() {
-      // Handle increase buttons (+, qty-increase)
-      document.querySelectorAll('.qty-increase, .qty-btn.qty-increase, .quantity-selector .qty-btn:last-child').forEach(button => {
-        // Remove old listeners
-        const newButton = button.cloneNode(true);
-        button.parentNode.replaceChild(newButton, button);
+    // Use event delegation for better reliability
+    document.addEventListener('click', function(e) {
+      // Handle increase button clicks
+      if (e.target.matches('.qty-increase, .qty-btn.qty-increase') || 
+          (e.target.classList.contains('qty-btn') && e.target.textContent.trim() === '+') ||
+          (e.target.closest('.quantity-selector') && e.target.closest('.quantity-selector').querySelector('.qty-btn:last-child') === e.target && e.target.textContent.trim() === '+')) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         
-        newButton.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          // Find input in the same quantity-selector
-          const quantitySelector = this.closest('.quantity-selector');
-          let input = null;
-          
-          if (quantitySelector) {
-            input = quantitySelector.querySelector('.qty-input, input[type="number"]');
-          } else {
-            // Fallback: find by variant-id
-            const variantId = this.dataset.variantId;
-            if (variantId) {
-              input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"], input[data-variant-id="${variantId}"]`);
-            }
+        const button = e.target.closest('.qty-btn') || e.target;
+        const quantitySelector = button.closest('.quantity-selector');
+        let input = null;
+        
+        if (quantitySelector) {
+          input = quantitySelector.querySelector('.qty-input, input[type="number"]');
+        } else {
+          const variantId = button.dataset.variantId;
+          if (variantId) {
+            input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"], input[data-variant-id="${variantId}"]`);
           }
+        }
+        
+        if (input) {
+          let currentValue = parseInt(input.value) || 1;
+          const maxValue = parseInt(input.getAttribute('max')) || 4;
           
-          if (input) {
-            let currentValue = parseInt(input.value) || 1;
-            const maxValue = parseInt(input.getAttribute('max')) || 4;
-            
-            if (currentValue < maxValue) {
-              input.value = currentValue + 1;
-              input.dispatchEvent(new Event('input', { bubbles: true }));
-              input.dispatchEvent(new Event('change', { bubbles: true }));
-              console.log(`✅ Increased quantity to ${input.value}`);
-            } else {
-              console.log(`⚠️ Maximum quantity (${maxValue}) reached`);
-              showQuantityNotification(this, `Maximum ${maxValue} tickets allowed`);
-            }
+          if (currentValue < maxValue) {
+            input.value = currentValue + 1;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            console.log(`✅ Increased quantity to ${input.value}`);
           } else {
-            console.error('❌ Input not found for increase button');
+            console.log(`⚠️ Maximum quantity (${maxValue}) reached`);
+            showQuantityNotification(button, `Maximum ${maxValue} tickets allowed`);
           }
-        });
-      });
+        } else {
+          console.error('❌ Input not found for increase button', button);
+        }
+        return false;
+      }
       
-      // Handle decrease buttons (-, qty-decrease)
-      document.querySelectorAll('.qty-decrease, .qty-btn.qty-decrease, .quantity-selector .qty-btn:first-child').forEach(button => {
-        // Remove old listeners
-        const newButton = button.cloneNode(true);
-        button.parentNode.replaceChild(newButton, button);
+      // Handle decrease button clicks
+      if (e.target.matches('.qty-decrease, .qty-btn.qty-decrease') || 
+          (e.target.classList.contains('qty-btn') && (e.target.textContent.trim() === '-' || e.target.textContent.trim() === '−')) ||
+          (e.target.closest('.quantity-selector') && e.target.closest('.quantity-selector').querySelector('.qty-btn:first-child') === e.target && (e.target.textContent.trim() === '-' || e.target.textContent.trim() === '−'))) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         
-        newButton.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          // Find input in the same quantity-selector
-          const quantitySelector = this.closest('.quantity-selector');
-          let input = null;
-          
-          if (quantitySelector) {
-            input = quantitySelector.querySelector('.qty-input, input[type="number"]');
-          } else {
-            // Fallback: find by variant-id
-            const variantId = this.dataset.variantId;
-            if (variantId) {
-              input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"], input[data-variant-id="${variantId}"]`);
-            }
+        const button = e.target.closest('.qty-btn') || e.target;
+        const quantitySelector = button.closest('.quantity-selector');
+        let input = null;
+        
+        if (quantitySelector) {
+          input = quantitySelector.querySelector('.qty-input, input[type="number"]');
+        } else {
+          const variantId = button.dataset.variantId;
+          if (variantId) {
+            input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"], input[data-variant-id="${variantId}"]`);
           }
+        }
+        
+        if (input) {
+          let currentValue = parseInt(input.value) || 1;
+          const minValue = parseInt(input.getAttribute('min')) || 1;
           
-          if (input) {
-            let currentValue = parseInt(input.value) || 1;
-            const minValue = parseInt(input.getAttribute('min')) || 1;
-            
-            if (currentValue > minValue) {
-              input.value = currentValue - 1;
-              input.dispatchEvent(new Event('input', { bubbles: true }));
-              input.dispatchEvent(new Event('change', { bubbles: true }));
-              console.log(`✅ Decreased quantity to ${input.value}`);
-            } else {
-              console.log(`⚠️ Minimum quantity (${minValue}) reached`);
-            }
+          if (currentValue > minValue) {
+            input.value = currentValue - 1;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            console.log(`✅ Decreased quantity to ${input.value}`);
           } else {
-            console.error('❌ Input not found for decrease button');
+            console.log(`⚠️ Minimum quantity (${minValue}) reached`);
           }
-        });
-      });
-    }
-    
-    // Initialize immediately
-    initQuantityButtons();
+        } else {
+          console.error('❌ Input not found for decrease button', button);
+        }
+        return false;
+      }
+    }, true); // Use capture phase
     
     // Handle input fields
     document.querySelectorAll('.qty-input').forEach(input => {
