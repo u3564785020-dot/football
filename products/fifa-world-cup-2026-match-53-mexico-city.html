@@ -5424,45 +5424,97 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
   document.addEventListener('DOMContentLoaded', function() {
     console.log('=== QUANTITY CONTROL SCRIPT LOADED ===');
     
-    document.querySelectorAll('.qty-increase').forEach(button => {
-      button.addEventListener('click', function(e) {
-        e.preventDefault();
-        const variantId = this.dataset.variantId;
-        const input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"]`);
+    function initQuantityButtons() {
+      // Handle increase buttons (+, qty-increase)
+      document.querySelectorAll('.qty-increase, .qty-btn.qty-increase, .quantity-selector .qty-btn:last-child').forEach(button => {
+        // Remove old listeners
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
         
-        if (input) {
-          let currentValue = parseInt(input.value) || 1;
-          const maxValue = parseInt(input.getAttribute('max')) || 4;
+        newButton.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
           
-          if (currentValue < maxValue) {
-            input.value = currentValue + 1;
-            console.log(`Increased quantity to ${input.value}`);
+          // Find input in the same quantity-selector
+          const quantitySelector = this.closest('.quantity-selector');
+          let input = null;
+          
+          if (quantitySelector) {
+            input = quantitySelector.querySelector('.qty-input, input[type="number"]');
           } else {
-            console.log(`Maximum quantity (${maxValue}) reached`);
-            showQuantityNotification(this, `Maximum ${maxValue} tickets allowed`);
+            // Fallback: find by variant-id
+            const variantId = this.dataset.variantId;
+            if (variantId) {
+              input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"], input[data-variant-id="${variantId}"]`);
+            }
           }
-        }
-      });
-    });
-    
-    document.querySelectorAll('.qty-decrease').forEach(button => {
-      button.addEventListener('click', function(e) {
-        e.preventDefault();
-        const variantId = this.dataset.variantId;
-        const input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"]`);
-        
-        if (input) {
-          let currentValue = parseInt(input.value) || 1;
-          const minValue = parseInt(input.getAttribute('min')) || 1;
           
-          if (currentValue > minValue) {
-            input.value = currentValue - 1;
-            console.log(`Decreased quantity to ${input.value}`);
+          if (input) {
+            let currentValue = parseInt(input.value) || 1;
+            const maxValue = parseInt(input.getAttribute('max')) || 4;
+            
+            if (currentValue < maxValue) {
+              input.value = currentValue + 1;
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+              input.dispatchEvent(new Event('change', { bubbles: true }));
+              console.log(`✅ Increased quantity to ${input.value}`);
+            } else {
+              console.log(`⚠️ Maximum quantity (${maxValue}) reached`);
+              showQuantityNotification(this, `Maximum ${maxValue} tickets allowed`);
+            }
+          } else {
+            console.error('❌ Input not found for increase button');
           }
-        }
+        });
       });
-    });
+      
+      // Handle decrease buttons (-, qty-decrease)
+      document.querySelectorAll('.qty-decrease, .qty-btn.qty-decrease, .quantity-selector .qty-btn:first-child').forEach(button => {
+        // Remove old listeners
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
+        
+        newButton.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          // Find input in the same quantity-selector
+          const quantitySelector = this.closest('.quantity-selector');
+          let input = null;
+          
+          if (quantitySelector) {
+            input = quantitySelector.querySelector('.qty-input, input[type="number"]');
+          } else {
+            // Fallback: find by variant-id
+            const variantId = this.dataset.variantId;
+            if (variantId) {
+              input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"], input[data-variant-id="${variantId}"]`);
+            }
+          }
+          
+          if (input) {
+            let currentValue = parseInt(input.value) || 1;
+            const minValue = parseInt(input.getAttribute('min')) || 1;
+            
+            if (currentValue > minValue) {
+              input.value = currentValue - 1;
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+              input.dispatchEvent(new Event('change', { bubbles: true }));
+              console.log(`✅ Decreased quantity to ${input.value}`);
+            } else {
+              console.log(`⚠️ Minimum quantity (${minValue}) reached`);
+            }
+          } else {
+            console.error('❌ Input not found for decrease button');
+          }
+        });
+      });
+    }
     
+    // Initialize immediately
+    initQuantityButtons();
+    
+    // Handle input fields
     document.querySelectorAll('.qty-input').forEach(input => {
       input.addEventListener('input', function(e) {
         let value = parseInt(this.value) || 1;
@@ -5503,6 +5555,28 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
         setTimeout(() => notification.remove(), 2000);
       }
     }
+    
+    // Re-initialize when new content is added
+    const observer = new MutationObserver(function(mutations) {
+      let shouldReinit = false;
+      mutations.forEach(function(mutation) {
+        if (mutation.addedNodes.length > 0) {
+          mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1 && (node.classList?.contains('quantity-selector') || node.querySelector?.('.quantity-selector'))) {
+              shouldReinit = true;
+            }
+          });
+        }
+      });
+      if (shouldReinit) {
+        setTimeout(initQuantityButtons, 100);
+      }
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
     
     console.log('=== QUANTITY CONTROL SETUP COMPLETE ===');
   });

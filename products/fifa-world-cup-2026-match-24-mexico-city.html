@@ -5344,78 +5344,118 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
   document.addEventListener('DOMContentLoaded', function() {
     console.log('=== QUANTITY CONTROL SCRIPT LOADED ===');
     
-    // Обработка кнопок увеличения количества
-    document.querySelectorAll('.qty-increase').forEach(button => {
-      button.addEventListener('click', function(e) {
-        e.preventDefault();
-        const variantId = this.dataset.variantId;
-        const input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"]`);
+    function initQuantityButtons() {
+      // Handle increase buttons (+, qty-increase)
+      document.querySelectorAll('.qty-increase, .qty-btn.qty-increase, .quantity-selector .qty-btn:last-child').forEach(button => {
+        // Remove old listeners
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
         
-        if (input) {
-          let currentValue = parseInt(input.value) || 1;
-          const maxValue = parseInt(input.getAttribute('max')) || 4;
+        newButton.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
           
-          if (currentValue < maxValue) {
-            input.value = currentValue + 1;
-            console.log(`Increased quantity to ${input.value} for variant ${variantId}`);
+          // Find input in the same quantity-selector
+          const quantitySelector = this.closest('.quantity-selector');
+          let input = null;
+          
+          if (quantitySelector) {
+            input = quantitySelector.querySelector('.qty-input, input[type="number"]');
           } else {
-            console.log(`Maximum quantity (${maxValue}) reached for variant ${variantId}`);
-            // Показать уведомление пользователю
-            showQuantityNotification(this, `Maximum ${maxValue} tickets allowed`);
+            // Fallback: find by variant-id
+            const variantId = this.dataset.variantId;
+            if (variantId) {
+              input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"], input[data-variant-id="${variantId}"]`);
+            }
           }
-        }
+          
+          if (input) {
+            let currentValue = parseInt(input.value) || 1;
+            const maxValue = parseInt(input.getAttribute('max')) || 4;
+            
+            if (currentValue < maxValue) {
+              input.value = currentValue + 1;
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+              input.dispatchEvent(new Event('change', { bubbles: true }));
+              console.log(`✅ Increased quantity to ${input.value}`);
+            } else {
+              console.log(`⚠️ Maximum quantity (${maxValue}) reached`);
+              showQuantityNotification(this, `Maximum ${maxValue} tickets allowed`);
+            }
+          } else {
+            console.error('❌ Input not found for increase button');
+          }
+        });
       });
-    });
-    
-    // Обработка кнопок уменьшения количества
-    document.querySelectorAll('.qty-decrease').forEach(button => {
-      button.addEventListener('click', function(e) {
-        e.preventDefault();
-        const variantId = this.dataset.variantId;
-        const input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"]`);
+      
+      // Handle decrease buttons (-, qty-decrease)
+      document.querySelectorAll('.qty-decrease, .qty-btn.qty-decrease, .quantity-selector .qty-btn:first-child').forEach(button => {
+        // Remove old listeners
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
         
-        if (input) {
-          let currentValue = parseInt(input.value) || 1;
-          const minValue = parseInt(input.getAttribute('min')) || 1;
+        newButton.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
           
-          if (currentValue > minValue) {
-            input.value = currentValue - 1;
-            console.log(`Decreased quantity to ${input.value} for variant ${variantId}`);
+          // Find input in the same quantity-selector
+          const quantitySelector = this.closest('.quantity-selector');
+          let input = null;
+          
+          if (quantitySelector) {
+            input = quantitySelector.querySelector('.qty-input, input[type="number"]');
           } else {
-            console.log(`Minimum quantity (${minValue}) reached for variant ${variantId}`);
+            // Fallback: find by variant-id
+            const variantId = this.dataset.variantId;
+            if (variantId) {
+              input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"], input[data-variant-id="${variantId}"]`);
+            }
           }
-        }
+          
+          if (input) {
+            let currentValue = parseInt(input.value) || 1;
+            const minValue = parseInt(input.getAttribute('min')) || 1;
+            
+            if (currentValue > minValue) {
+              input.value = currentValue - 1;
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+              input.dispatchEvent(new Event('change', { bubbles: true }));
+              console.log(`✅ Decreased quantity to ${input.value}`);
+            } else {
+              console.log(`⚠️ Minimum quantity (${minValue}) reached`);
+            }
+          } else {
+            console.error('❌ Input not found for decrease button');
+          }
+        });
       });
-    });
+    }
     
-    // Обработка прямого ввода в поле
+    // Initialize immediately
+    initQuantityButtons();
+    
+    // Handle input fields
     document.querySelectorAll('.qty-input').forEach(input => {
       input.addEventListener('input', function(e) {
         let value = parseInt(this.value) || 1;
         const minValue = parseInt(this.getAttribute('min')) || 1;
         const maxValue = parseInt(this.getAttribute('max')) || 4;
         
-        // Ограничение значения
         if (value < minValue) {
           this.value = minValue;
-          console.log(`Value adjusted to minimum: ${minValue}`);
         } else if (value > maxValue) {
           this.value = maxValue;
-          console.log(`Value adjusted to maximum: ${maxValue}`);
           showQuantityNotification(this, `Maximum ${maxValue} tickets allowed`);
         }
       });
       
-      // Предотвращение ввода некорректных символов
       input.addEventListener('keypress', function(e) {
-        // Разрешить только цифры
         if (e.key < '0' || e.key > '9') {
           e.preventDefault();
         }
       });
     });
     
-    // Функция показа уведомления
     function showQuantityNotification(element, message) {
       // Создаем уведомление
       const notification = document.createElement('div');
