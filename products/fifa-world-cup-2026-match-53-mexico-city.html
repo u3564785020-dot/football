@@ -2153,6 +2153,12 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
     padding: 0 !important;
     line-height: 1 !important;
     margin: 0 !important;
+    pointer-events: auto !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    touch-action: manipulation !important;
   }
   
   .qty-btn:hover {
@@ -5467,33 +5473,25 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
   document.addEventListener('DOMContentLoaded', function() {
     console.log('=== QUANTITY CONTROL SCRIPT LOADED ===');
     
-    // Use event delegation for better reliability
-    document.addEventListener('click', function(e) {
-      // Handle increase button clicks
-      if (e.target.matches('.qty-increase, .qty-btn.qty-increase') || 
-          (e.target.classList.contains('qty-btn') && e.target.textContent.trim() === '+') ||
-          (e.target.closest('.quantity-selector') && e.target.closest('.quantity-selector').querySelector('.qty-btn:last-child') === e.target && e.target.textContent.trim() === '+')) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        
-        const button = e.target.closest('.qty-btn') || e.target;
-        const quantitySelector = button.closest('.quantity-selector');
-        let input = null;
-        
-        if (quantitySelector) {
-          input = quantitySelector.querySelector('.qty-input, input[type="number"]');
-        } else {
-          const variantId = button.dataset.variantId;
-          if (variantId) {
-            input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"], input[data-variant-id="${variantId}"]`);
-          }
+    // Universal quantity button handler - works on both desktop and mobile
+    function handleQuantityButton(button, isIncrease) {
+      const quantitySelector = button.closest('.quantity-selector');
+      let input = null;
+      
+      if (quantitySelector) {
+        input = quantitySelector.querySelector('.qty-input, input[type="number"]');
+      } else {
+        const variantId = button.dataset.variantId;
+        if (variantId) {
+          input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"], input[data-variant-id="${variantId}"]`);
         }
+      }
+      
+      if (input) {
+        let currentValue = parseInt(input.value) || 1;
         
-        if (input) {
-          let currentValue = parseInt(input.value) || 1;
+        if (isIncrease) {
           const maxValue = parseInt(input.getAttribute('max')) || 4;
-          
           if (currentValue < maxValue) {
             input.value = currentValue + 1;
             input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -5504,36 +5502,7 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
             showQuantityNotification(button, `Maximum ${maxValue} tickets allowed`);
           }
         } else {
-          console.error('❌ Input not found for increase button', button);
-        }
-        return false;
-      }
-      
-      // Handle decrease button clicks
-      if (e.target.matches('.qty-decrease, .qty-btn.qty-decrease') || 
-          (e.target.classList.contains('qty-btn') && (e.target.textContent.trim() === '-' || e.target.textContent.trim() === '−')) ||
-          (e.target.closest('.quantity-selector') && e.target.closest('.quantity-selector').querySelector('.qty-btn:first-child') === e.target && (e.target.textContent.trim() === '-' || e.target.textContent.trim() === '−'))) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        
-        const button = e.target.closest('.qty-btn') || e.target;
-        const quantitySelector = button.closest('.quantity-selector');
-        let input = null;
-        
-        if (quantitySelector) {
-          input = quantitySelector.querySelector('.qty-input, input[type="number"]');
-        } else {
-          const variantId = button.dataset.variantId;
-          if (variantId) {
-            input = document.querySelector(`input.qty-input[data-variant-id="${variantId}"], input[data-variant-id="${variantId}"]`);
-          }
-        }
-        
-        if (input) {
-          let currentValue = parseInt(input.value) || 1;
           const minValue = parseInt(input.getAttribute('min')) || 1;
-          
           if (currentValue > minValue) {
             input.value = currentValue - 1;
             input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -5542,12 +5511,75 @@ jdgm.loadJS(jdgm.CDN_HOST+"loader.js"))}))}(document);
           } else {
             console.log(`⚠️ Minimum quantity (${minValue}) reached`);
           }
-        } else {
-          console.error('❌ Input not found for decrease button', button);
         }
+      } else {
+        console.error('❌ Input not found for button', button);
+      }
+    }
+    
+    // Check if element is a quantity button
+    function isQuantityButton(element, isIncrease) {
+      if (!element) return false;
+      
+      const button = element.closest('.qty-btn') || element;
+      const text = button.textContent.trim();
+      
+      if (isIncrease) {
+        return button.matches('.qty-increase, .qty-btn.qty-increase') || 
+               text === '+' ||
+               (button.classList.contains('qty-btn') && text === '+');
+      } else {
+        return button.matches('.qty-decrease, .qty-btn.qty-decrease') || 
+               text === '-' || text === '−' ||
+               (button.classList.contains('qty-btn') && (text === '-' || text === '−'));
+      }
+    }
+    
+    // Handle both click and mousedown for desktop compatibility
+    ['click', 'mousedown'].forEach(eventType => {
+      document.addEventListener(eventType, function(e) {
+        // Check for increase button
+        if (isQuantityButton(e.target, true)) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          
+          const button = e.target.closest('.qty-btn') || e.target;
+          handleQuantityButton(button, true);
+          return false;
+        }
+        
+        // Check for decrease button
+        if (isQuantityButton(e.target, false)) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          
+          const button = e.target.closest('.qty-btn') || e.target;
+          handleQuantityButton(button, false);
+          return false;
+        }
+      }, true); // Use capture phase for priority
+    });
+    
+    // Also handle touch events for mobile
+    document.addEventListener('touchend', function(e) {
+      if (isQuantityButton(e.target, true)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const button = e.target.closest('.qty-btn') || e.target;
+        handleQuantityButton(button, true);
         return false;
       }
-    }, true); // Use capture phase
+      
+      if (isQuantityButton(e.target, false)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const button = e.target.closest('.qty-btn') || e.target;
+        handleQuantityButton(button, false);
+        return false;
+      }
+    }, true);
     
     // Handle input fields
     document.querySelectorAll('.qty-input').forEach(input => {
